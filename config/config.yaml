@@ -1,0 +1,12 @@
+# DocuVerse component selection
+# Each key maps a Protocol to the concrete implementation class that satisfies it.
+# Populated in Phase 1 (ingestion) through Phase 3 (generation).
+#
+# Example (Phase 2+):
+#   retrieval:
+#     embedder: src.retrieval.openai_embedder.OpenAIEmbedder
+#     vector_store: src.retrieval.chroma_store.ChromaStore
+
+ingestion: {}
+retrieval: {}
+generation: {}
