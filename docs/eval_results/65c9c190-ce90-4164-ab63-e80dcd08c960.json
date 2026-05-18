@@ -1,0 +1,80 @@
+{
+  "run_id": "65c9c190-ce90-4164-ab63-e80dcd08c960",
+  "timestamp": "2026-05-18T05:47:20.367982",
+  "version": "v1-baseline",
+  "judge_model": "gpt-4o-mini",
+  "dataset_size": 3,
+  "metrics": {
+    "faithfulness": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n_valid": 3
+    },
+    "answer_relevancy": {
+      "mean": 0.9907,
+      "std": 0.0077,
+      "min": 0.981,
+      "max": 1.0,
+      "n_valid": 3
+    },
+    "context_precision": {
+      "mean": 0.9,
+      "std": 0.1414,
+      "min": 0.7,
+      "max": 1.0,
+      "n_valid": 3
+    },
+    "context_recall": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n_valid": 3
+    }
+  },
+  "per_sample_results": [
+    {
+      "question": "Which is the largest planet in the Solar System?",
+      "category": "simple_lookup",
+      "ground_truth": "Jupiter is the largest planet in the Solar System, with a mass more than twice that of all other planets combined.",
+      "generated_answer": "Jupiter is the largest planet in the Solar System, with a mass more than twice that of all other planets combined [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9910800583231146,
+        "context_precision": 0.699999999965,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "What is the average surface temperature of Venus?",
+      "category": "simple_lookup",
+      "ground_truth": "Venus has an average surface temperature of 465 degrees Celsius, sustained by a thick carbon dioxide atmosphere and a runaway greenhouse effect.",
+      "generated_answer": "The average surface temperature of Venus is 465 degrees Celsius [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0000000000000002,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "How long is a year on Mercury?",
+      "category": "simple_lookup",
+      "ground_truth": "A Mercurian year lasts only 88 Earth days.",
+      "generated_answer": "A Mercurian year lasts only 88 Earth days [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9810440166449645,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    }
+  ],
+  "cost_estimate_inr": 1.24,
+  "duration_seconds": 35.69
+}

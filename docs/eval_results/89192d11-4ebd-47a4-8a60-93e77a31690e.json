@@ -1,0 +1,301 @@
+{
+  "run_id": "89192d11-4ebd-47a4-8a60-93e77a31690e",
+  "timestamp": "2026-05-18T05:55:21.484910",
+  "version": "v1-baseline",
+  "judge_model": "gpt-4o-mini",
+  "dataset_size": 20,
+  "metrics": {
+    "faithfulness": {
+      "mean": 0.8917,
+      "std": 0.2487,
+      "min": 0.0,
+      "max": 1.0,
+      "n_valid": 20
+    },
+    "answer_relevancy": {
+      "mean": 0.8455,
+      "std": 0.2866,
+      "min": 0.0,
+      "max": 1.0,
+      "n_valid": 20
+    },
+    "context_precision": {
+      "mean": 0.8964,
+      "std": 0.2338,
+      "min": 0.0,
+      "max": 1.0,
+      "n_valid": 20
+    },
+    "context_recall": {
+      "mean": 0.9417,
+      "std": 0.1422,
+      "min": 0.5,
+      "max": 1.0,
+      "n_valid": 20
+    }
+  },
+  "per_sample_results": [
+    {
+      "question": "Which is the largest planet in the Solar System?",
+      "category": "simple_lookup",
+      "ground_truth": "Jupiter is the largest planet in the Solar System, with a mass more than twice that of all other planets combined.",
+      "generated_answer": "Jupiter is the largest planet in the Solar System, with a mass more than twice that of all other planets combined [chunk_1].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9910800583231146,
+        "context_precision": 0.699999999965,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "What is the average surface temperature of Venus?",
+      "category": "simple_lookup",
+      "ground_truth": "Venus has an average surface temperature of 465 degrees Celsius, sustained by a thick carbon dioxide atmosphere and a runaway greenhouse effect.",
+      "generated_answer": "The average surface temperature of Venus is 465 degrees Celsius [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 1.0000000000000002,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "How long is a year on Mercury?",
+      "category": "simple_lookup",
+      "ground_truth": "A Mercurian year lasts only 88 Earth days.",
+      "generated_answer": "A Mercurian year lasts only 88 Earth days [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9810430249421782,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "Why is Mars called the Red Planet?",
+      "category": "simple_lookup",
+      "ground_truth": "Mars is called the Red Planet because of iron oxide (rust) on its surface.",
+      "generated_answer": "Mars is called the Red Planet due to iron oxide on its surface [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9861190797855774,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "What is one Astronomical Unit (AU)?",
+      "category": "simple_lookup",
+      "ground_truth": "One Astronomical Unit is defined as Earth's average distance from the Sun, approximately 150 million kilometres.",
+      "generated_answer": "One Astronomical Unit (AU) is defined as the average distance of Earth from the Sun, which is about 150 million kilometres [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9758595213575848,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "When was Pluto reclassified as a dwarf planet?",
+      "category": "simple_lookup",
+      "ground_truth": "Pluto was reclassified from a full planet to a dwarf planet in 2006.",
+      "generated_answer": "Pluto was reclassified from a full planet in 2006 [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9517909306742356,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "What is special about Saturn's moon Titan?",
+      "category": "simple_lookup",
+      "ground_truth": "Titan is the only moon in the Solar System with a dense atmosphere and surface lakes of liquid methane and ethane.",
+      "generated_answer": "Saturn's moon Titan is special because it is the only moon in the Solar System with a dense atmosphere and surface lakes of liquid methane and ethane [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 0.6666666666666666,
+        "answer_relevancy": 0.9817602588780093,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "When did Voyager 1 enter interstellar space?",
+      "category": "simple_lookup",
+      "ground_truth": "Voyager 1 crossed the heliopause and entered interstellar space in 2012, becoming the first human-made object to do so.",
+      "generated_answer": "Voyager 1 entered interstellar space in 2012, becoming the first human-made object to do so [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9999986865482066,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "Describe Saturn's ring system and its composition.",
+      "category": "multi_fact",
+      "ground_truth": "Saturn's ring system is composed of ice and rock particles ranging from tiny grains to boulders several metres across. Titan, Saturn's largest moon, has a dense atmosphere and surface lakes of liquid methane and ethane.",
+      "generated_answer": "Saturn is famous for its spectacular ring system, which is composed of ice and rock particles ranging from tiny grains to boulders several metres across [chunk_0][chunk_1].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8431844827278315,
+        "context_precision": 0.9999999999,
+        "context_recall": 0.5
+      }
+    },
+    {
+      "question": "What are the notable geological and physical features of Mars?",
+      "category": "multi_fact",
+      "ground_truth": "Mars, known as the Red Planet due to iron oxide on its surface, has the largest volcano in the Solar System \u2014 Olympus Mons, standing 21 kilometres high. It has two small moons, Phobos and Deimos, and evidence suggests liquid water once flowed across its surface.",
+      "generated_answer": "Mars, known as the Red Planet due to iron oxide on its surface, has the largest volcano in the Solar System, Olympus Mons, which stands 21 kilometres high. Additionally, Mars has two small moons, Phobos and Deimos, and evidence suggests that liquid water once flowed across its surface [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9075023969381162,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "Describe Jupiter's moons and its Great Red Spot.",
+      "category": "multi_fact",
+      "ground_truth": "Jupiter has at least 95 known moons; its four largest \u2014 Io, Europa, Ganymede, and Callisto \u2014 were discovered by Galileo in 1610. The Great Red Spot is a massive storm that has been raging for at least 350 years.",
+      "generated_answer": "Jupiter has at least 95 known moons, with its four largest \u2014 Io, Europa, Ganymede, and Callisto \u2014 discovered by Galileo in 1610 [chunk_0]. Europa is particularly interesting to scientists because it may have a subsurface ocean of liquid water beneath its icy crust, making it a candidate for extraterrestrial life [chunk_0]. Additionally, the Great Red Spot is a storm that has been raging for at least 350 years [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8943529527535197,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "What makes Uranus and Neptune unique compared to other outer planets?",
+      "category": "multi_fact",
+      "ground_truth": "Uranus and Neptune are ice giants with interiors rich in water, ammonia, and methane ices. Uranus rotates on its side with an axial tilt of 98 degrees, while Neptune has the strongest winds in the Solar System at 2,100 kilometres per hour.",
+      "generated_answer": "Uranus and Neptune are unique compared to other outer planets because they are classified as ice giants, with interiors rich in water, ammonia, and methane ices, unlike Jupiter and Saturn, which are primarily composed of hydrogen and helium [chunk_0][chunk_1]. Additionally, Uranus has an unusual axial tilt of 98 degrees, causing it to rotate on its side [chunk_1].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 0.6666666666666666,
+        "answer_relevancy": 0.9999411723198747,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "What is the Kuiper Belt and what is found there?",
+      "category": "multi_fact",
+      "ground_truth": "The Kuiper Belt is a region of icy bodies beyond Neptune that includes the dwarf planet Pluto, which was reclassified from a full planet in 2006. The Oort Cloud, further out, is the source of long-period comets.",
+      "generated_answer": "The Kuiper Belt is a region beyond Neptune that contains icy bodies, including the dwarf planet Pluto, which was reclassified from a full planet in 2006 [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9677728190907858,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "Compare Jupiter and Saturn's atmospheric compositions and most notable features.",
+      "category": "cross_chunk",
+      "ground_truth": "Both Jupiter and Saturn are composed mostly of hydrogen and helium. Jupiter is distinguished by its Great Red Spot, a storm lasting over 350 years, and has at least 95 moons. Saturn is famous for its spectacular ring system of ice and rock particles, and its moon Titan is the only moon in the Solar System with a dense atmosphere.",
+      "generated_answer": "Jupiter and Saturn are both gas giants primarily composed of hydrogen and helium [chunk_2]. Jupiter is the largest planet in the Solar System, with a mass more than twice that of all other planets combined, and is known for its Great Red Spot, a storm that has raged for at least 350 years [chunk_0][chunk_3]. Saturn, on the other hand, is famous for its spectacular ring system, which is composed of ice and rock particles ranging from tiny grains to boulders several meters across [chunk_1]. Additionally, Saturn's moon Titan is notable for being the only moon in the Solar System with a dense atmosphere and surface lakes of liquid methane and ethane [chunk_1].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9101373691940787,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "Which locations in the Solar System might support life, and why?",
+      "category": "cross_chunk",
+      "ground_truth": "Earth is the only known planet confirmed to harbour life, lying in the habitable zone where liquid water exists on the surface. Europa, a moon of Jupiter, is also a candidate for extraterrestrial life because a subsurface ocean of liquid water may exist beneath its icy crust.",
+      "generated_answer": "Earth is the only known planet to harbour life, as it lies in the habitable zone of the Sun, where liquid water can exist [chunk_0]. Additionally, Europa, one of Jupiter's moons, is of particular scientific interest because it may have a subsurface ocean of liquid water beneath its icy crust, making it a candidate for extraterrestrial life [chunk_2].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8475324828249003,
+        "context_precision": 0.7555555555303703,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "How do the compositions of the inner planets differ from those of the outer planets?",
+      "category": "cross_chunk",
+      "ground_truth": "The four inner planets \u2014 Mercury, Venus, Earth, and Mars \u2014 are terrestrial planets composed primarily of rock and metal. The outer gas giants Jupiter and Saturn are composed mostly of hydrogen and helium, while the ice giants Uranus and Neptune have interiors rich in water, ammonia, and methane ices.",
+      "generated_answer": "The inner planets, which include Mercury, Venus, Earth, and Mars, are composed primarily of rock and metal, making them terrestrial planets [chunk_0][chunk_2]. In contrast, the outer planets\u2014Jupiter, Saturn, Uranus, and Neptune\u2014are much larger and are composed mostly of hydrogen and helium (in the case of Jupiter and Saturn) or of ices alongside hydrogen and helium (in the case of Uranus and Neptune, often referred to as ice giants) [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9365664255716474,
+        "context_precision": 0.8333333332916666,
+        "context_recall": 0.6666666666666666
+      }
+    },
+    {
+      "question": "What is the GDP of Mars?",
+      "category": "negative",
+      "ground_truth": "This information is not in the provided documents.",
+      "generated_answer": "I cannot answer this from the provided documents.",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 0.0,
+        "answer_relevancy": 0.0,
+        "context_precision": 0.6388888888675925,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "What is the chemical composition of individual comets in the Oort Cloud?",
+      "category": "negative",
+      "ground_truth": "This information is not in the provided documents.",
+      "generated_answer": "I cannot answer this from the provided documents.",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 0.5,
+        "answer_relevancy": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "Mars?",
+      "category": "edge_case",
+      "ground_truth": "Mars is the fourth planet from the Sun, known as the Red Planet due to iron oxide on its surface. It has the largest volcano in the Solar System, Olympus Mons at 21 kilometres high, and two small moons called Phobos and Deimos.",
+      "generated_answer": "Mars, known as the Red Planet due to iron oxide on its surface, has the largest volcano in the Solar System \u2014 Olympus Mons, standing 21 kilometres high. Mars has two small moons, Phobos and Deimos, and evidence suggests liquid water once flowed across its surface [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8737620059082826,
+        "context_precision": 0.9999999999,
+        "context_recall": 0.6666666666666666
+      }
+    },
+    {
+      "question": "I am a student studying astronomy and need to understand the key differences between the inner rocky planets like Mercury, Venus, Earth, and Mars versus the outer gas giants like Jupiter and Saturn and the ice giants like Uranus and Neptune, as well as what formed the Solar System and what lies beyond Neptune in the Kuiper Belt and Oort Cloud. Can you provide a detailed comparison and overview?",
+      "category": "edge_case",
+      "ground_truth": "The Solar System formed approximately 4.6 billion years ago from a collapsing molecular cloud. The four inner terrestrial planets (Mercury, Venus, Earth, Mars) are composed of rock and metal. Jupiter and Saturn are gas giants of hydrogen and helium, while Uranus and Neptune are ice giants containing water, ammonia, and methane ices. Beyond Neptune, the Kuiper Belt contains icy bodies including dwarf planet Pluto, and the Oort Cloud is the source of long-period comets.",
+      "generated_answer": "The Solar System consists of eight planets categorized into two main groups: the inner rocky planets and the outer gas and ice giants. \n\nThe inner planets\u2014Mercury, Venus, Earth, and Mars\u2014are terrestrial, composed primarily of rock and metal [chunk_1]. Earth is unique among these as it is the only known planet to support life, located in the habitable zone of the Sun where liquid water can exist [chunk_0]. Mars, known as the Red Planet due to iron oxide on its surface, features the largest volcano in the Solar System, Olympus Mons, and has two small moons, Phobos and Deimos. Evidence suggests that liquid water once flowed on Mars' surface [chunk_2].\n\nIn contrast, the outer planets are significantly larger and are divided into gas giants and ice giants. Jupiter and Saturn are gas giants, primarily composed of hydrogen and helium [chunk_0]. Jupiter is the largest planet in the Solar System, with a mass more than twice that of all other planets combined [chunk_2]. Saturn is known for its prominent ring system and has a moon, Titan, which is unique for having a dense atmosphere and surface lakes of liquid methane and ethane [chunk_3].\n\nUranus and Neptune are classified as ice giants, with their interiors rich in water, ammonia, and methane ices [chunk_3]. Uranus has a distinctive axial tilt of 98 degrees, causing it to rotate on its side, while Neptune is known for having the strongest winds in the Solar System, reaching speeds of 2,100 kilometers per hour [chunk_3].\n\nThe Solar System formed approximately 4.6 billion years ago from the gravitational collapse of a giant molecular cloud, with the Sun accounting for more than 99.8 percent of its total mass [chunk_1]. Beyond Neptune lies the Kuiper Belt, a region filled with icy bodies, including the dwarf planet Pluto, which was reclassified from a full planet in 2006 [chunk_4]. Further out is the Oort Cloud, a vast spherical shell at the far edge of the Solar System, which is the source of long-period comets [chunk_4].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.861609564964938,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0
+      }
+    }
+  ],
+  "cost_estimate_inr": 8.26,
+  "duration_seconds": 135.71
+}

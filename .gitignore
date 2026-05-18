@@ -28,6 +28,10 @@ build/
 data/chroma_db/
 data/chroma_test/
 
+# Evaluation — keep dataset and results, ignore scratch files
+data/eval/*.tmp
+data/eval/__pycache__/
+
 # IDE
 .DS_Store
 .idea/
