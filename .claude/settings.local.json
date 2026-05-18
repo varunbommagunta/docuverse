@@ -20,7 +20,9 @@
       "Bash(jobs -l)",
       "Bash(curl -s http://127.0.0.1:8006/health)",
       "Bash(pip show *)",
-      "Bash(docker compose *)"
+      "Bash(docker compose *)",
+      "WebSearch",
+      "WebFetch(domain:www.legislative.gov.in)"
     ]
   }
 }

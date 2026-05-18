@@ -31,11 +31,12 @@ class PyPDFParser:
     (Phase 2+) for scanned documents.
     """
 
-    def parse(self, file_path: str) -> ParsedDocument:
+    def parse(self, file_path: str, page_limit: int | None = None) -> ParsedDocument:
         """Parse a PDF file and return its content as a ParsedDocument.
 
         Args:
             file_path: Absolute or relative path to the PDF file.
+            page_limit: If set, only the first N pages are extracted. None means all pages.
 
         Returns:
             ParsedDocument with per-page text, concatenated full text, and
@@ -46,7 +47,7 @@ class PyPDFParser:
                 or cannot be read.
         """
         log = logger.bind(file_path=file_path)
-        log.info("Parsing PDF")
+        log.info("Parsing PDF", page_limit=page_limit)
 
         if not os.path.exists(file_path):
             raise DocumentParseError(f"File not found: {file_path}")
@@ -56,8 +57,11 @@ class PyPDFParser:
         except (PdfReadError, Exception) as exc:
             raise DocumentParseError(f"Cannot open PDF '{file_path}': {exc}") from exc
 
+        all_pages = reader.pages
+        pages_to_parse = all_pages[:page_limit] if page_limit is not None else all_pages
+
         pages: list[str] = []
-        for page_num, page in enumerate(reader.pages):
+        for page_num, page in enumerate(pages_to_parse):
             try:
                 text = page.extract_text() or ""
             except Exception as exc:
@@ -67,8 +71,15 @@ class PyPDFParser:
 
         full_text = "\n\n".join(p for p in pages if p)
         filename = os.path.basename(file_path)
+        total_pdf_pages = len(all_pages)
 
-        log.info("PDF parsed", filename=filename, total_pages=len(pages), text_length=len(full_text))
+        log.info(
+            "PDF parsed",
+            filename=filename,
+            pages_parsed=len(pages),
+            total_pdf_pages=total_pdf_pages,
+            text_length=len(full_text),
+        )
 
         return ParsedDocument(
             text=full_text,
@@ -76,6 +87,7 @@ class PyPDFParser:
             metadata={
                 "filename": filename,
                 "total_pages": len(pages),
+                "total_pdf_pages": total_pdf_pages,
                 "source_path": os.path.abspath(file_path),
             },
         )

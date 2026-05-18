@@ -1,0 +1,106 @@
+{
+  "run_id": "32afbadd-c867-4318-828a-b9b8f9d18369",
+  "timestamp": "2026-05-18T09:33:22.770343",
+  "version": "v1-realistic-smoke",
+  "judge_model": "gpt-4o-mini",
+  "dataset_size": 5,
+  "metrics": {
+    "faithfulness": {
+      "mean": 0.7048,
+      "std": 0.373,
+      "min": 0.0,
+      "max": 1.0,
+      "n_valid": 5
+    },
+    "answer_relevancy": {
+      "mean": 0.7721,
+      "std": 0.3872,
+      "min": 0.0,
+      "max": 0.9946,
+      "n_valid": 5
+    },
+    "context_precision": {
+      "mean": 0.7567,
+      "std": 0.3818,
+      "min": 0.0,
+      "max": 1.0,
+      "n_valid": 5
+    },
+    "context_recall": {
+      "mean": 0.9,
+      "std": 0.2,
+      "min": 0.5,
+      "max": 1.0,
+      "n_valid": 5
+    }
+  },
+  "per_sample_results": [
+    {
+      "question": "What are the writs available under Article 32 for enforcement of Fundamental Rights?",
+      "category": "multi_fact",
+      "ground_truth": "Article 32 guarantees the right to move the Supreme Court for enforcement of Fundamental Rights. The Supreme Court can issue directions, orders, or writs including habeas corpus, mandamus, prohibition, quo warranto, and certiorari for the enforcement of those rights.",
+      "generated_answer": "The writs available under Article 32 for the enforcement of Fundamental Rights include habeas corpus, mandamus, prohibition, quo warranto, and certiorari [chunk_0][chunk_1].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9946469902132606,
+        "context_precision": 0.8666666666377778,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "What does the ARC report recommend regarding political funding to reduce corruption?",
+      "category": "simple_lookup",
+      "ground_truth": "The ARC report recommends the introduction of a system for partial state funding to reduce political corruption, as suggested by the Indrajit Gupta Committee on State Funding of Elections. This funding should be mainly in kind for certain essential items.",
+      "generated_answer": "The ARC report recommends the introduction of a system for partial state funding of elections to reduce the major source of political corruption. This funding should be mainly in kind for certain essential items, as suggested by the Indrajit Gupta Committee on State Funding of Elections [chunk_0]. Additionally, the report emphasizes the need for reforms in political funding to address issues such as the use of money in elections and the criminalization associated with it [chunk_1].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 0.8571428571428571,
+        "answer_relevancy": 0.9889557976293477,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "How does the right to freedom of religion under Article 25 relate to citizens' fundamental duties under Article 51A?",
+      "category": "cross_chunk",
+      "ground_truth": "Article 25 protects the freedom of conscience and the right to freely profess, practice, and propagate religion, subject to public order, morality, and health. Article 51A's fundamental duties complement this by requiring citizens to promote harmony and the spirit of common brotherhood transcending religious diversities, creating a balance between individual religious freedom and collective national cohesion.",
+      "generated_answer": "The right to freedom of religion under Article 25 ensures that all persons are entitled to freedom of conscience and the right to freely profess, practice, and propagate religion [chunk_0][chunk_3]. This right is complemented by the fundamental duties outlined in Article 51A, which include the duty of every citizen to abide by the Constitution and respect its ideals, thereby supporting the framework that protects individual freedoms, including religious freedoms [chunk_1]. Additionally, the fundamental duties encourage citizens to uphold the sovereignty and integrity of India, which can be seen as a call to respect the diverse religious practices within the nation [chunk_1].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 0.6666666666666666,
+        "answer_relevancy": 0.9092321871713505,
+        "context_precision": 0.9166666666361111,
+        "context_recall": 0.5
+      }
+    },
+    {
+      "question": "What is the GDP of Mars?",
+      "category": "negative",
+      "ground_truth": "This information is not in the provided documents.",
+      "generated_answer": "I cannot answer this from the provided documents.",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 0.0,
+        "answer_relevancy": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "What is the Kuiper Belt and what is found there?",
+      "category": "multi_fact",
+      "ground_truth": "The Kuiper Belt is a region of icy bodies beyond Neptune that includes the dwarf planet Pluto, which was reclassified from a full planet in 2006. The Oort Cloud, further out, is the source of long-period comets.",
+      "generated_answer": "The Kuiper Belt is a region beyond Neptune that contains icy bodies, including the dwarf planet Pluto, which was reclassified from a full planet in 2006 [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9677728190907858,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    }
+  ],
+  "cost_estimate_inr": 2.07,
+  "duration_seconds": 38.05
+}

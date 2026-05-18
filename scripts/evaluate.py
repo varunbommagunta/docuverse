@@ -13,6 +13,7 @@ Usage
 
 import argparse
 import os
+import random
 import sys
 import time
 from datetime import datetime, timezone
@@ -158,8 +159,8 @@ def main() -> None:
     validate_dataset(samples)
 
     if args.limit:
-        samples = samples[: args.limit]
-        print(f"  [!] Limiting to {args.limit} sample(s) for smoke test.")
+        samples = random.sample(samples, min(args.limit, len(samples)))
+        print(f"  [!] Randomly sampled {len(samples)} sample(s) for smoke test.")
 
     print(f"  Dataset: {len(samples)} samples")
 

@@ -1,0 +1,202 @@
+[
+  {
+    "question": "Which is the largest planet in the Solar System?",
+    "ground_truth": "Jupiter is the largest planet in the Solar System, with a mass more than twice that of all other planets combined.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What is the average surface temperature of Venus?",
+    "ground_truth": "Venus has an average surface temperature of 465 degrees Celsius, sustained by a thick carbon dioxide atmosphere and a runaway greenhouse effect.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "How long is a year on Mercury?",
+    "ground_truth": "A Mercurian year lasts only 88 Earth days.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "Why is Mars called the Red Planet?",
+    "ground_truth": "Mars is called the Red Planet because of iron oxide (rust) on its surface.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What is one Astronomical Unit (AU)?",
+    "ground_truth": "One Astronomical Unit is defined as Earth's average distance from the Sun, approximately 150 million kilometres.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "When was Pluto reclassified as a dwarf planet?",
+    "ground_truth": "Pluto was reclassified from a full planet to a dwarf planet in 2006.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What is special about Saturn's moon Titan?",
+    "ground_truth": "Titan is the only moon in the Solar System with a dense atmosphere and surface lakes of liquid methane and ethane.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "When did Voyager 1 enter interstellar space?",
+    "ground_truth": "Voyager 1 crossed the heliopause and entered interstellar space in 2012, becoming the first human-made object to do so.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "Describe Saturn's ring system and its composition.",
+    "ground_truth": "Saturn's ring system is composed of ice and rock particles ranging from tiny grains to boulders several metres across. Titan, Saturn's largest moon, has a dense atmosphere and surface lakes of liquid methane and ethane.",
+    "category": "multi_fact"
+  },
+  {
+    "question": "What are the notable geological and physical features of Mars?",
+    "ground_truth": "Mars, known as the Red Planet due to iron oxide on its surface, has the largest volcano in the Solar System — Olympus Mons, standing 21 kilometres high. It has two small moons, Phobos and Deimos, and evidence suggests liquid water once flowed across its surface.",
+    "category": "multi_fact"
+  },
+  {
+    "question": "Describe Jupiter's moons and its Great Red Spot.",
+    "ground_truth": "Jupiter has at least 95 known moons; its four largest — Io, Europa, Ganymede, and Callisto — were discovered by Galileo in 1610. The Great Red Spot is a massive storm that has been raging for at least 350 years.",
+    "category": "multi_fact"
+  },
+  {
+    "question": "What makes Uranus and Neptune unique compared to other outer planets?",
+    "ground_truth": "Uranus and Neptune are ice giants with interiors rich in water, ammonia, and methane ices. Uranus rotates on its side with an axial tilt of 98 degrees, while Neptune has the strongest winds in the Solar System at 2,100 kilometres per hour.",
+    "category": "multi_fact"
+  },
+  {
+    "question": "What is the Kuiper Belt and what is found there?",
+    "ground_truth": "The Kuiper Belt is a region of icy bodies beyond Neptune that includes the dwarf planet Pluto, which was reclassified from a full planet in 2006. The Oort Cloud, further out, is the source of long-period comets.",
+    "category": "multi_fact"
+  },
+  {
+    "question": "Compare Jupiter and Saturn's atmospheric compositions and most notable features.",
+    "ground_truth": "Both Jupiter and Saturn are composed mostly of hydrogen and helium. Jupiter is distinguished by its Great Red Spot, a storm lasting over 350 years, and has at least 95 moons. Saturn is famous for its spectacular ring system of ice and rock particles, and its moon Titan is the only moon in the Solar System with a dense atmosphere.",
+    "category": "cross_chunk"
+  },
+  {
+    "question": "Which locations in the Solar System might support life, and why?",
+    "ground_truth": "Earth is the only known planet confirmed to harbour life, lying in the habitable zone where liquid water exists on the surface. Europa, a moon of Jupiter, is also a candidate for extraterrestrial life because a subsurface ocean of liquid water may exist beneath its icy crust.",
+    "category": "cross_chunk"
+  },
+  {
+    "question": "How do the compositions of the inner planets differ from those of the outer planets?",
+    "ground_truth": "The four inner planets — Mercury, Venus, Earth, and Mars — are terrestrial planets composed primarily of rock and metal. The outer gas giants Jupiter and Saturn are composed mostly of hydrogen and helium, while the ice giants Uranus and Neptune have interiors rich in water, ammonia, and methane ices.",
+    "category": "cross_chunk"
+  },
+  {
+    "question": "What is the GDP of Mars?",
+    "ground_truth": "This information is not in the provided documents.",
+    "category": "negative"
+  },
+  {
+    "question": "What is the chemical composition of individual comets in the Oort Cloud?",
+    "ground_truth": "This information is not in the provided documents.",
+    "category": "negative"
+  },
+  {
+    "question": "Mars?",
+    "ground_truth": "Mars is the fourth planet from the Sun, known as the Red Planet due to iron oxide on its surface. It has the largest volcano in the Solar System, Olympus Mons at 21 kilometres high, and two small moons called Phobos and Deimos.",
+    "category": "edge_case"
+  },
+  {
+    "question": "I am a student studying astronomy and need to understand the key differences between the inner rocky planets like Mercury, Venus, Earth, and Mars versus the outer gas giants like Jupiter and Saturn and the ice giants like Uranus and Neptune, as well as what formed the Solar System and what lies beyond Neptune in the Kuiper Belt and Oort Cloud. Can you provide a detailed comparison and overview?",
+    "ground_truth": "The Solar System formed approximately 4.6 billion years ago from a collapsing molecular cloud. The four inner terrestrial planets (Mercury, Venus, Earth, Mars) are composed of rock and metal. Jupiter and Saturn are gas giants of hydrogen and helium, while Uranus and Neptune are ice giants containing water, ammonia, and methane ices. Beyond Neptune, the Kuiper Belt contains icy bodies including dwarf planet Pluto, and the Oort Cloud is the source of long-period comets.",
+    "category": "edge_case"
+  },
+  {
+    "question": "What does Article 1 of the Indian Constitution say about the name and territory of India?",
+    "ground_truth": "Article 1 states that India, that is Bharat, shall be a Union of States. The territory of India comprises the territories of the States, the Union territories specified in the First Schedule, and such other territories as may be acquired.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What does Article 14 of the Constitution guarantee about equality?",
+    "ground_truth": "Article 14 guarantees that the State shall not deny to any person equality before the law or the equal protection of the laws within the territory of India.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What does Article 21 say about the right to life and personal liberty?",
+    "ground_truth": "Article 21 states that no person shall be deprived of his life or personal liberty except according to procedure established by law.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What does Article 17 of the Constitution say about untouchability?",
+    "ground_truth": "Article 17 abolishes untouchability and forbids its practice in any form. The enforcement of any disability arising out of untouchability shall be an offence punishable in accordance with law.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What does Article 52 say about the President of India?",
+    "ground_truth": "Article 52 states that there shall be a President of India.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What are the citizenship criteria at the commencement of the Constitution under Article 5?",
+    "ground_truth": "Under Article 5, every person with domicile in the territory of India who meets any of the following criteria is a citizen: (a) was born in India, (b) either of whose parents was born in India, or (c) who has been ordinarily resident in India for at least five years immediately preceding the commencement of the Constitution.",
+    "category": "multi_fact"
+  },
+  {
+    "question": "What are the writs available under Article 32 for enforcement of Fundamental Rights?",
+    "ground_truth": "Article 32 guarantees the right to move the Supreme Court for enforcement of Fundamental Rights. The Supreme Court can issue directions, orders, or writs including habeas corpus, mandamus, prohibition, quo warranto, and certiorari for the enforcement of those rights.",
+    "category": "multi_fact"
+  },
+  {
+    "question": "How is the President of India elected, and what is the role of the Council of Ministers?",
+    "ground_truth": "The President is elected by an electoral college consisting of the elected members of both Houses of Parliament and the elected members of the Legislative Assemblies of the States. The President acts with a Council of Ministers headed by the Prime Minister, who aid and advise the President, who shall act in accordance with such advice.",
+    "category": "multi_fact"
+  },
+  {
+    "question": "How does the right to freedom of religion under Article 25 relate to citizens' fundamental duties under Article 51A?",
+    "ground_truth": "Article 25 protects the freedom of conscience and the right to freely profess, practice, and propagate religion, subject to public order, morality, and health. Article 51A's fundamental duties complement this by requiring citizens to promote harmony and the spirit of common brotherhood transcending religious diversities, creating a balance between individual religious freedom and collective national cohesion.",
+    "category": "cross_chunk"
+  },
+  {
+    "question": "What provisions does the Constitution make for Directive Principles of State Policy and how do they relate to Fundamental Rights?",
+    "ground_truth": "The Directive Principles of State Policy provide guidelines for the State to secure social, economic, and political justice for citizens. Unlike Fundamental Rights, Directive Principles are not enforceable by courts but are fundamental in governance. They include ensuring adequate means of livelihood, equal pay for equal work, and protection of health and strength of workers.",
+    "category": "cross_chunk"
+  },
+  {
+    "question": "What is the exact salary of a Member of Parliament as specified in the Constitution?",
+    "ground_truth": "This information is not in the provided documents.",
+    "category": "negative"
+  },
+  {
+    "question": "Constitution?",
+    "ground_truth": "The Constitution of India establishes India as a Union of States. It guarantees Fundamental Rights including equality before law (Article 14), protection against untouchability (Article 17), right to life and personal liberty (Article 21), and freedom of religion (Article 25). It also provides for the President of India and a Council of Ministers headed by the Prime Minister.",
+    "category": "edge_case"
+  },
+  {
+    "question": "How many chapters does the ARC report on ethics in governance contain?",
+    "ground_truth": "The ARC report on ethics in governance contains nine chapters.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What is the definition of ethics according to the ARC report on ethics in governance?",
+    "ground_truth": "Ethics is defined as a set of standards that society places on itself, which helps guide behaviour, choices, and actions. The Commission acknowledges that standards alone do not ensure ethical behaviour; a robust culture of integrity is required.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What does the ARC report recommend regarding political funding to reduce corruption?",
+    "ground_truth": "The ARC report recommends the introduction of a system for partial state funding to reduce political corruption, as suggested by the Indrajit Gupta Committee on State Funding of Elections. This funding should be mainly in kind for certain essential items.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What are the seven principles of public life listed in the ARC report, with their definitions?",
+    "ground_truth": "The seven principles of public life are: (1) Selflessness — decisions solely in terms of public interest; (2) Integrity — avoid obligations to people who might influence their work; (3) Objectivity — make choices on merit; (4) Accountability — accountable for decisions to the public; (5) Openness — be as open as possible about decisions; (6) Honesty — declare private interests and resolve conflicts in the public interest; (7) Leadership — promote these principles by example.",
+    "category": "multi_fact"
+  },
+  {
+    "question": "What does the ARC report say about the conduct of judges and accountability of the judiciary?",
+    "ground_truth": "The ARC report states that the conduct of judges must reaffirm the people's faith in the impartiality of the judiciary. Justice must not only be done but also be seen to be done. Judges should be conscious that they are under public scrutiny, and their behavior should not be unbecoming of the high office they occupy.",
+    "category": "multi_fact"
+  },
+  {
+    "question": "How does the ARC report connect corporate ethics and the conduct of public servants?",
+    "ground_truth": "The ARC report emphasizes that ethics in governance extends beyond government to corporate ethics and ethics in business, calling for a paradigm shift from 'business ethics' to 'ethics in business'. For public servants, the report recommends Public Service Values stipulated by law, with a mechanism to ensure civil servants constantly aspire towards these values, including allegiance to constitutional ideals and apolitical functioning.",
+    "category": "cross_chunk"
+  },
+  {
+    "question": "What does the ARC report recommend about a Lokpal or an anti-corruption ombudsman at the national level?",
+    "ground_truth": "This information is not in the provided documents.",
+    "category": "negative"
+  },
+  {
+    "question": "Ethics?",
+    "ground_truth": "Ethics is a set of standards that society places on itself to guide behaviour, choices, and actions. The ARC report on ethics in governance covers nine chapters and emphasizes accountability, transparency, and a robust culture of integrity for all holders of public office, based on seven principles: selflessness, integrity, objectivity, accountability, openness, honesty, and leadership.",
+    "category": "edge_case"
+  }
+]

@@ -57,3 +57,25 @@ def test_parse_raises_on_invalid_pdf(parser: PyPDFParser) -> None:
             parser.parse(tmp_path)
     finally:
         os.unlink(tmp_path)
+
+
+def test_parse_page_limit_restricts_pages(parser: PyPDFParser, sample_pdf_path: str) -> None:
+    full = parser.parse(sample_pdf_path)
+    limited = parser.parse(sample_pdf_path, page_limit=1)
+    assert len(limited.pages) == 1
+    assert limited.metadata["total_pages"] == 1
+    assert limited.metadata["total_pdf_pages"] == full.metadata["total_pages"]
+
+
+def test_parse_page_limit_none_returns_all_pages(parser: PyPDFParser, sample_pdf_path: str) -> None:
+    full = parser.parse(sample_pdf_path)
+    also_full = parser.parse(sample_pdf_path, page_limit=None)
+    assert len(full.pages) == len(also_full.pages)
+
+
+def test_parse_page_limit_larger_than_pdf_returns_all_pages(
+    parser: PyPDFParser, sample_pdf_path: str
+) -> None:
+    full = parser.parse(sample_pdf_path)
+    overlimit = parser.parse(sample_pdf_path, page_limit=9999)
+    assert len(overlimit.pages) == len(full.pages)
