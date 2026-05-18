@@ -1,31 +1,22 @@
 """RAGOrchestrator — coordinates retrieval and generation for a single query.
 
-The orchestrator is the application's core use-case class. It knows nothing
-about HTTP or Streamlit; it speaks exclusively in domain objects (Answer,
-RetrievedChunk). FastAPI routes and the Streamlit UI call it through the
-injected instance.
-
-Dependencies (Retriever, Generator) are injected at construction time so they
-can be swapped without modifying this class — a textbook application of the
-Dependency Inversion principle.
+Phase 1 implementation: replaces the Phase 0 stub with a real two-step
+pipeline. The orchestrator itself has no knowledge of HTTP, Streamlit, or
+any external service — those details are hidden behind the injected components.
 """
 
 import structlog
 
 from src.generation.base import Generator
 from src.retrieval.base import Retriever
+from src.utils.exceptions import GenerationError, RetrievalError
 from src.utils.models import Answer
 
 logger = structlog.get_logger(__name__)
 
 
 class RAGOrchestrator:
-    """Coordinates the RAG pipeline: retrieve relevant chunks, then generate an answer.
-
-    This class is intentionally thin in Phase 0 — it defines the public contract
-    (method signatures and docstrings) without any implementation. Phase 3 will
-    fill in the body of `answer()`.
-    """
+    """Coordinates the RAG pipeline: retrieve relevant chunks, then generate an answer."""
 
     def __init__(self, retriever: Retriever, generator: Generator) -> None:
         """Inject retriever and generator dependencies.
@@ -36,26 +27,45 @@ class RAGOrchestrator:
         """
         self._retriever = retriever
         self._generator = generator
-        logger.info("RAGOrchestrator initialised", retriever=type(retriever).__name__, generator=type(generator).__name__)
+        logger.info(
+            "RAGOrchestrator initialised",
+            retriever=type(retriever).__name__,
+            generator=type(generator).__name__,
+        )
 
     def answer(self, query: str) -> Answer:
         """Run the full RAG pipeline for a user query.
-
-        Steps (Phase 3 implementation):
-          1. Call self._retriever.retrieve(query, top_k) → list[RetrievedChunk]
-          2. Call self._generator.generate(query, chunks) → Answer
-          3. Log the query, number of chunks, and answer length
-          4. Return the Answer
 
         Args:
             query: Natural-language question from the user.
 
         Returns:
-            Answer containing generated text, citation IDs, and source chunks.
+            Answer with generated text, citation indices, and source chunks.
 
         Raises:
-            RetrievalError: If retrieval fails.
-            GenerationError: If generation fails.
-            NotImplementedError: Until Phase 3 implementation is added.
+            RetrievalError: If the retrieval step fails.
+            GenerationError: If the generation step fails.
         """
-        raise NotImplementedError("RAGOrchestrator.answer() will be implemented in Phase 3.")
+        log = logger.bind(query_length=len(query))
+        log.info("Query received")
+
+        # ── Step 1: Retrieve ──────────────────────────────────────────────────
+        try:
+            chunks = self._retriever.retrieve(query, top_k=5)
+        except RetrievalError:
+            raise
+        except Exception as exc:
+            raise RetrievalError(f"Unexpected retrieval error: {exc}") from exc
+
+        log.info("Chunks retrieved", chunk_count=len(chunks))
+
+        # ── Step 2: Generate ──────────────────────────────────────────────────
+        try:
+            result = self._generator.generate(query, chunks)
+        except GenerationError:
+            raise
+        except Exception as exc:
+            raise GenerationError(f"Unexpected generation error: {exc}") from exc
+
+        log.info("Answer generated", answer_length=len(result.text), citation_count=len(result.citations))
+        return result

@@ -5,7 +5,22 @@
       "Bash(pytest *)",
       "Bash(uvicorn api.main:app --port 8000)",
       "Bash(curl -s http://localhost:8000/health)",
-      "Bash(kill %1)"
+      "Bash(kill %1)",
+      "Bash(ruff check *)",
+      "Bash(mypy *)",
+      "Bash(python -m mypy src/ --ignore-missing-imports)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(curl -s http://localhost:8000/docs)",
+      "Bash(uvicorn api.main:app --port 8001 --log-level warning)",
+      "Bash(curl -s http://localhost:8001/health)",
+      "Bash(python *)",
+      "Bash(wait)",
+      "Bash(curl http://localhost:8002/health)",
+      "Bash(curl -s http://127.0.0.1:8004/health)",
+      "Bash(jobs -l)",
+      "Bash(curl -s http://127.0.0.1:8006/health)",
+      "Bash(pip show *)",
+      "Bash(docker compose *)"
     ]
   }
 }

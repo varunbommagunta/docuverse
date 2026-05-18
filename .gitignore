@@ -26,6 +26,7 @@ build/
 
 # Data & databases
 data/chroma_db/
+data/chroma_test/
 
 # IDE
 .DS_Store

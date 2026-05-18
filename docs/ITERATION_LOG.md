@@ -27,9 +27,36 @@ Quantitative evaluation metrics will appear starting Phase 4.
 
 ---
 
-## Phase 1 — Ingestion
+## Phase 1 — Core RAG Pipeline (current)
 
-**Goal:** PDF → Chunks stored in memory (no vector DB yet).
+**Goal:** End-to-end working RAG: upload PDF → ask question → cited answer.
+
+**Completed:**
+- `PyPDFParser` — pypdf-based parser returning `ParsedDocument` with per-page text and metadata
+- `RecursiveChunker` — LangChain `RecursiveCharacterTextSplitter`, overlapping chunks with UUID IDs
+- `IngestionPipeline` — parse → chunk → embed → store, with per-step timing logs
+- `OpenAIEmbedder` — batch embedding via OpenAI API, tenacity retry (3 attempts, exponential backoff)
+- `ChromaVectorStore` — persistent on-disk Chroma index, cosine similarity, delete by doc_id
+- `DenseRetriever` — composes embedder + vector store for query → top-K retrieval
+- `OpenAIGenerator` — gpt-4o-mini with citation system prompt, `[chunk_N]` regex parsing
+- `RAGOrchestrator` — real implementation replacing Phase 0 stub
+- `src/factory.py` — wires all components from Settings, returns `(orchestrator, pipeline)`
+- `POST /ingest` — multipart upload, 25 MB limit, PDF validation, temp file cleanup
+- `POST /query` — JSON body, 503 guard when no docs indexed, full citation detail response
+- Streamlit UI — PDF upload sidebar, chat interface, expandable source attribution
+- 37 unit tests, all passing
+
+**Key decisions:**
+- `PyPDFParser.parse()` returns `ParsedDocument` (richer than Protocol's `list[str]`). Protocol drift documented; IngestionPipeline uses concrete types directly. Will reconcile in Phase 2 when Protocol is updated.
+- `Answer.citations` changed from `list[str]` (chunk IDs) to `list[int]` (chunk indices) for consistency with the `[chunk_N]` citation format.
+- `ChromaVectorStore` uses `hnsw:space: cosine`; similarity = `1 - distance`.
+- chromadb stubs have overly strict `embeddings` type hints; suppressed with `# type: ignore[arg-type]`.
+- FastAPI `Depends()` in default args flagged by ruff B008 (false positive for FastAPI pattern); B008 added to ruff ignore list.
+- `openai==2.24.0`, `chromadb==1.5.2` — both significantly newer than Phase 0 spec assumed.
+
+---
+
+## Phase 2 — Retrieval Improvements
 
 V1 baseline coming after Phase 1 ships.
 

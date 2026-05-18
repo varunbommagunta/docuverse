@@ -51,6 +51,19 @@ class Settings(BaseSettings):
     api_host: str = Field(default="0.0.0.0", description="Uvicorn bind host.")
     api_port: int = Field(default=8000, description="Uvicorn bind port.", gt=0)
 
+    # ── Vector store ──────────────────────────────────────────────────────────
+    chroma_persist_directory: str = Field(
+        default="./data/chroma_db",
+        description="Directory where Chroma persists its index.",
+    )
+
+    # ── Upload limits ─────────────────────────────────────────────────────────
+    max_upload_size_mb: int = Field(
+        default=25,
+        description="Maximum PDF upload size in megabytes.",
+        gt=0,
+    )
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

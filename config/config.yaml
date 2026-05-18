@@ -1,12 +1,15 @@
-# DocuVerse component selection
+# DocuVerse component selection — V1 (Phase 1)
 # Each key maps a Protocol to the concrete implementation class that satisfies it.
-# Populated in Phase 1 (ingestion) through Phase 3 (generation).
-#
-# Example (Phase 2+):
-#   retrieval:
-#     embedder: src.retrieval.openai_embedder.OpenAIEmbedder
-#     vector_store: src.retrieval.chroma_store.ChromaStore
+# The factory in src/factory.py reads these to wire up the pipeline.
 
-ingestion: {}
-retrieval: {}
-generation: {}
+ingestion:
+  parser: src.ingestion.parsers.PyPDFParser
+  chunker: src.ingestion.chunkers.RecursiveChunker
+
+retrieval:
+  embedder: src.retrieval.embedders.OpenAIEmbedder
+  vector_store: src.retrieval.vector_store.ChromaVectorStore
+  retriever: src.retrieval.dense_retriever.DenseRetriever
+
+generation:
+  generator: src.generation.openai_generator.OpenAIGenerator
