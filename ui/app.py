@@ -1,8 +1,8 @@
 """Streamlit frontend for DocuVerse — Document Q&A.
 
-Phase 1 implementation: full upload + chat interface. Communicates with the
-FastAPI backend at API_URL (defaults to http://localhost:8000). Uses
-st.session_state to track ingested documents and chat history within a session.
+Phase 5 implementation: updated landing page and HF Spaces-compatible API URL.
+Communicates with the FastAPI backend at API_URL (set by supervisord in Docker
+to http://127.0.0.1:8000; defaults to http://localhost:8000 locally).
 """
 
 import os
@@ -26,13 +26,12 @@ if "messages" not in st.session_state:
 
 
 def _show_sources(chunks: list[dict], citations: list[int]) -> None:
-    """Render expandable source chunks below an answer."""
     if not chunks:
         return
-    with st.expander(f"📖 Sources ({len(chunks)} retrieved, {len(citations)} cited)"):
+    with st.expander(f"Sources ({len(chunks)} retrieved, {len(citations)} cited)"):
         for chunk in chunks:
             idx = chunk["chunk_index"]
-            cited = "✅ Cited" if idx in citations else "— Not cited"
+            cited = "Cited" if idx in citations else "Not cited"
             label = (
                 f"[chunk_{idx}] {cited} | "
                 f"Score: {chunk['score']:.3f} | "
@@ -43,12 +42,18 @@ def _show_sources(chunks: list[dict], citations: list[int]) -> None:
             st.divider()
 
 
-# ── Sidebar: upload ───────────────────────────────────────────────────────────
+# ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.title("📁 Upload Documents")
-    uploaded_file = st.file_uploader("Choose a PDF", type=["pdf"])
+    st.title("DocuVerse")
+    st.caption("Hybrid RAG · PDF Q&A · Cited Answers")
+    st.divider()
 
-    if uploaded_file is not None and st.button("Ingest Document", type="primary"):
+    st.subheader("Upload a PDF")
+    uploaded_file = st.file_uploader(
+        "Choose a PDF (max 6 MB)", type=["pdf"], label_visibility="collapsed"
+    )
+
+    if uploaded_file is not None and st.button("Ingest Document", type="primary", use_container_width=True):
         with st.spinner(f"Ingesting {uploaded_file.name}…"):
             try:
                 response = requests.post(
@@ -65,30 +70,44 @@ with st.sidebar:
                 if response.status_code == 200:
                     data = response.json()
                     st.success(
-                        f"✅ **{data['filename']}** ingested — "
+                        f"**{data['filename']}** ingested — "
                         f"{data['chunk_count']} chunks indexed."
                     )
                     st.session_state.ingested_docs.append(data)
+                elif response.status_code == 429:
+                    st.error("Daily cost cap reached. Try again tomorrow.")
                 else:
                     detail = response.json().get("detail", "Unknown error")
-                    st.error(f"❌ Ingestion failed ({response.status_code}): {detail}")
+                    st.error(f"Ingestion failed ({response.status_code}): {detail}")
             except requests.ConnectionError:
-                st.error("❌ Cannot connect to the API. Is the backend running?")
+                st.error("Cannot connect to the API. Is the backend running?")
             except Exception as exc:
-                st.error(f"❌ Unexpected error: {exc}")
+                st.error(f"Unexpected error: {exc}")
 
     st.divider()
 
     if st.session_state.ingested_docs:
-        st.subheader("Indexed Documents")
+        st.subheader("Indexed this session")
         for doc in st.session_state.ingested_docs:
             st.caption(f"📄 {doc['filename']} — {doc['chunk_count']} chunks")
     else:
         st.caption("No documents ingested yet this session.")
 
-# ── Main area: chat ───────────────────────────────────────────────────────────
-st.title("DocuVerse — Document Q&A")
-st.subheader("Ask questions. Get cited answers from your documents.")
+    st.divider()
+    with st.expander("Sample questions to try"):
+        st.markdown(
+            "- What are the Fundamental Rights guaranteed by the Constitution of India?\n"
+            "- What recommendations does the ARC report make on ethics training?\n"
+            "- What is the largest planet in the Solar System?"
+        )
+
+
+# ── Main area ─────────────────────────────────────────────────────────────────
+st.title("Document Q&A")
+st.markdown(
+    "Upload a PDF in the sidebar, then ask questions below. "
+    "Answers are grounded in your documents with inline `[chunk_N]` citations."
+)
 
 # Render chat history
 for msg in st.session_state.messages:
@@ -100,7 +119,7 @@ for msg in st.session_state.messages:
 # Chat input
 if prompt := st.chat_input("Ask a question about your documents…"):
     if not st.session_state.ingested_docs:
-        st.warning("⚠️ Please upload and ingest a PDF first.")
+        st.warning("Please upload and ingest a PDF first.")
     else:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
@@ -128,16 +147,20 @@ if prompt := st.chat_input("Ask a question about your documents…"):
                         "chunks": chunks,
                         "citations": citations,
                     })
+                elif response.status_code == 429:
+                    msg = "Daily cost cap reached. Try again tomorrow."
+                    st.warning(msg)
+                    st.session_state.messages.append({"role": "assistant", "content": msg})
                 elif response.status_code == 503:
-                    msg = "⚠️ No documents indexed yet. Please ingest a PDF first."
+                    msg = "No documents indexed yet. Please ingest a PDF first."
                     st.warning(msg)
                     st.session_state.messages.append({"role": "assistant", "content": msg})
                 else:
                     detail = response.json().get("detail", "Unknown error")
-                    msg = f"❌ Query failed: {detail}"
+                    msg = f"Query failed: {detail}"
                     st.error(msg)
                     st.session_state.messages.append({"role": "assistant", "content": msg})
             except requests.ConnectionError:
-                msg = "❌ Cannot connect to the API. Is the backend running?"
+                msg = "Cannot connect to the API. Is the backend running?"
                 st.error(msg)
                 st.session_state.messages.append({"role": "assistant", "content": msg})

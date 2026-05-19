@@ -13,8 +13,13 @@ __pycache__/
 dist/
 build/
 data/chroma_db/
+data/eval/
 docs/
 tests/
 scripts/
 .github/
+.vscode/
+.idea/
 *.md
+!README.md
+docker-compose.yml

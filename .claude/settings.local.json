@@ -22,7 +22,10 @@
       "Bash(pip show *)",
       "Bash(docker compose *)",
       "WebSearch",
-      "WebFetch(domain:www.legislative.gov.in)"
+      "WebFetch(domain:www.legislative.gov.in)",
+      "Bash(docker build *)",
+      "PowerShell(Stop-Process *)",
+      "Bash(curl -sf --max-time 5 http://localhost:7860/api/health)"
     ]
   }
 }

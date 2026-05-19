@@ -1,3 +1,14 @@
+---
+sdk: docker
+app_port: 7860
+title: DocuVerse
+emoji: 📚
+colorFrom: blue
+colorTo: indigo
+short_description: Production-grade RAG — PDF Q&A with cited answers
+pinned: false
+---
+
 # DocuVerse
 
 ![Python](https://img.shields.io/badge/python-3.12-blue)

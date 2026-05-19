@@ -73,8 +73,19 @@ class Settings(BaseSettings):
 
     # ── Upload limits ─────────────────────────────────────────────────────────
     max_upload_size_mb: int = Field(
-        default=25,
+        default=6,
         description="Maximum PDF upload size in megabytes.",
+        gt=0,
+    )
+
+    # ── HuggingFace Spaces deployment ─────────────────────────────────────────
+    hf_spaces_mode: bool = Field(
+        default=False,
+        description="When true, enables stricter defaults suited for HF Spaces.",
+    )
+    daily_cost_cap_inr: int = Field(
+        default=50,
+        description="Daily OpenAI spend cap in Indian Rupees. Rejected with 429 once exceeded.",
         gt=0,
     )
 

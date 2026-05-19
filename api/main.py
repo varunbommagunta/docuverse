@@ -10,11 +10,18 @@ from contextlib import asynccontextmanager
 
 import structlog
 from fastapi import FastAPI
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
 
+from api.middleware.cost_cap import DailyCostCapMiddleware
 from api.routes import health, ingest, query
 from src.utils.logger import configure_logging
 
 logger = structlog.get_logger(__name__)
+
+limiter = Limiter(key_func=get_remote_address, default_limits=["20/minute"])
 
 
 @asynccontextmanager
@@ -23,7 +30,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     configure_logging()
     logger.info("DocuVerse API starting up")
 
-    # Build all RAG components and store on app.state for dependency injection
     from src.factory import get_rag_components
     orchestrator, pipeline = get_rag_components()
     app.state.orchestrator = orchestrator
@@ -41,6 +47,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
+
 app.include_router(health.router)
 app.include_router(ingest.router)
 app.include_router(query.router)
+
+# Middleware applied in LIFO order: SlowAPI (outermost) → CostCap → routes
+from config.settings import get_settings as _get_settings
+_daily_cap = _get_settings().daily_cost_cap_inr
+app.add_middleware(DailyCostCapMiddleware, daily_cap_inr=_daily_cap)
+app.add_middleware(SlowAPIMiddleware)
