@@ -142,6 +142,33 @@ class ChromaVectorStore:
         except Exception as exc:
             raise RetrievalError(f"Failed to delete document '{document_id}': {exc}") from exc
 
+    def get_all_chunks(self) -> list[Chunk]:
+        """Return every chunk stored in the collection as Chunk objects.
+
+        Used by BM25Retriever to build its in-memory sparse index.
+
+        Returns:
+            All Chunk objects in arbitrary order.
+
+        Raises:
+            RetrievalError: On Chroma read failure.
+        """
+        try:
+            result = self._collection.get(include=["documents", "metadatas"])
+        except Exception as exc:
+            raise RetrievalError(f"Failed to fetch all chunks: {exc}") from exc
+
+        chunks: list[Chunk] = []
+        ids = result.get("ids", [])
+        documents = result.get("documents") or []
+        metadatas = result.get("metadatas") or []
+
+        for chunk_id, text, meta in zip(ids, documents, metadatas, strict=False):
+            chunks.append(Chunk(id=chunk_id, text=text or "", metadata=meta or {}))
+
+        logger.info("All chunks fetched", count=len(chunks))
+        return chunks
+
     def count(self) -> int:
         """Return total number of chunks currently stored."""
         return self._collection.count()

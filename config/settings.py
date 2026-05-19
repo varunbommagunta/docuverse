@@ -43,6 +43,20 @@ class Settings(BaseSettings):
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
     top_k: int = Field(default=5, description="Number of chunks returned by retriever.", gt=0)
+    retrieval_strategy: str = Field(
+        default="dense",
+        description="Retrieval strategy: dense | sparse | hybrid | reranked_hybrid",
+    )
+    hybrid_dense_top_k: int = Field(default=20, description="Candidate count from dense in hybrid.", gt=0)
+    hybrid_sparse_top_k: int = Field(default=20, description="Candidate count from BM25 in hybrid.", gt=0)
+    hybrid_rrf_k: int = Field(default=60, description="RRF constant k (from RRF paper).", gt=0)
+    reranker_model: str = Field(
+        default="cross-encoder/ms-marco-MiniLM-L-6-v2",
+        description="sentence-transformers cross-encoder model for reranking.",
+    )
+    reranker_fetch_k: int = Field(
+        default=50, description="Candidate count to fetch before cross-encoder reranking.", gt=0
+    )
 
     # ── Logging ───────────────────────────────────────────────────────────────
     log_level: str = Field(default="INFO", description="Logging level (DEBUG/INFO/WARNING/ERROR).")

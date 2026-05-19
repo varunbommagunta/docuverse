@@ -1,0 +1,106 @@
+{
+  "run_id": "ee0cf8f6-7560-4f5d-a331-a1099b78cb92",
+  "timestamp": "2026-05-19T03:49:38.066238",
+  "version": "v1-phase4-smoke",
+  "judge_model": "gpt-4o-mini",
+  "dataset_size": 5,
+  "metrics": {
+    "faithfulness": {
+      "mean": 0.9333,
+      "std": 0.1333,
+      "min": 0.6667,
+      "max": 1.0,
+      "n_valid": 5
+    },
+    "answer_relevancy": {
+      "mean": 0.9835,
+      "std": 0.0196,
+      "min": 0.9518,
+      "max": 1.0,
+      "n_valid": 5
+    },
+    "context_precision": {
+      "mean": 0.9667,
+      "std": 0.0667,
+      "min": 0.8333,
+      "max": 1.0,
+      "n_valid": 5
+    },
+    "context_recall": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "n_valid": 5
+    }
+  },
+  "per_sample_results": [
+    {
+      "question": "What does Article 52 say about the President of India?",
+      "category": "simple_lookup",
+      "ground_truth": "Article 52 states that there shall be a President of India.",
+      "generated_answer": "Article 52 states that there shall be a President of India [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9961995172295681,
+        "context_precision": 0.8333333332916666,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "What does Article 21 say about the right to life and personal liberty?",
+      "category": "simple_lookup",
+      "ground_truth": "Article 21 states that no person shall be deprived of his life or personal liberty except according to procedure established by law.",
+      "generated_answer": "Article 21 states that no person shall be deprived of his life or personal liberty except according to procedure established by law [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9693271379482054,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "When did Voyager 1 enter interstellar space?",
+      "category": "simple_lookup",
+      "ground_truth": "Voyager 1 crossed the heliopause and entered interstellar space in 2012, becoming the first human-made object to do so.",
+      "generated_answer": "Voyager 1 entered interstellar space in 2012, becoming the first human-made object to do so [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9999999999999999,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "What makes Uranus and Neptune unique compared to other outer planets?",
+      "category": "multi_fact",
+      "ground_truth": "Uranus and Neptune are ice giants with interiors rich in water, ammonia, and methane ices. Uranus rotates on its side with an axial tilt of 98 degrees, while Neptune has the strongest winds in the Solar System at 2,100 kilometres per hour.",
+      "generated_answer": "Uranus and Neptune are unique compared to other outer planets because they are classified as ice giants, with interiors rich in water, ammonia, and methane ices, unlike Jupiter and Saturn, which are primarily composed of hydrogen and helium [chunk_0][chunk_1]. Additionally, Uranus has a distinctive axial tilt of 98 degrees, causing it to rotate on its side [chunk_1].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 0.6666666666666666,
+        "answer_relevancy": 1.0000000000000002,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0
+      }
+    },
+    {
+      "question": "When was Pluto reclassified as a dwarf planet?",
+      "category": "simple_lookup",
+      "ground_truth": "Pluto was reclassified from a full planet to a dwarf planet in 2006.",
+      "generated_answer": "Pluto was reclassified from a full planet in 2006 [chunk_0].",
+      "retrieved_chunk_count": 5,
+      "scores": {
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9517797477164155,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      }
+    }
+  ],
+  "cost_estimate_inr": 2.07,
+  "duration_seconds": 62.77
+}

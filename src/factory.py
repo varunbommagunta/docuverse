@@ -4,6 +4,12 @@ get_rag_components() is the single entry point that reads configuration and
 constructs the full dependency graph: embedder → vector store → retriever →
 generator → orchestrator, plus ingestion pipeline. Called once in the FastAPI
 lifespan and the results stored on app.state.
+
+Retrieval strategies (set RETRIEVAL_STRATEGY env var):
+  dense            — DenseRetriever (default, cosine similarity)
+  sparse           — BM25Retriever (keyword search only)
+  hybrid           — HybridRetriever (dense + BM25, RRF fusion)
+  reranked_hybrid  — RerankedRetriever(HybridRetriever + CrossEncoderReranker)
 """
 
 import structlog
@@ -20,6 +26,50 @@ from src.retrieval.vector_store import ChromaVectorStore
 
 logger = structlog.get_logger(__name__)
 
+_VALID_STRATEGIES = {"dense", "sparse", "hybrid", "reranked_hybrid"}
+
+
+def _build_retriever(strategy: str, embedder, vector_store, settings):
+    """Construct the appropriate retriever for the given strategy."""
+    if strategy == "dense":
+        return DenseRetriever(embedder=embedder, vector_store=vector_store)
+
+    if strategy == "sparse":
+        from src.retrieval.bm25_retriever import BM25Retriever
+        return BM25Retriever(vector_store=vector_store)
+
+    if strategy in ("hybrid", "reranked_hybrid"):
+        from src.retrieval.bm25_retriever import BM25Retriever
+        from src.retrieval.hybrid_retriever import HybridRetriever
+
+        dense = DenseRetriever(embedder=embedder, vector_store=vector_store)
+        sparse = BM25Retriever(vector_store=vector_store)
+        hybrid = HybridRetriever(
+            dense=dense,
+            sparse=sparse,
+            rrf_k=settings.hybrid_rrf_k,
+            fetch_k=max(settings.hybrid_dense_top_k, settings.hybrid_sparse_top_k),
+        )
+
+        if strategy == "hybrid":
+            return hybrid
+
+        # reranked_hybrid
+        from src.retrieval.cross_encoder_reranker import CrossEncoderReranker
+        from src.retrieval.reranked_retriever import RerankedRetriever
+
+        reranker = CrossEncoderReranker(model_name=settings.reranker_model)
+        return RerankedRetriever(
+            base=hybrid,
+            reranker=reranker,
+            fetch_k=settings.reranker_fetch_k,
+        )
+
+    raise ValueError(
+        f"Unknown retrieval_strategy '{strategy}'. "
+        f"Valid options: {sorted(_VALID_STRATEGIES)}"
+    )
+
 
 def get_rag_components() -> tuple[RAGOrchestrator, IngestionPipeline]:
     """Construct and return the orchestrator and ingestion pipeline.
@@ -30,7 +80,14 @@ def get_rag_components() -> tuple[RAGOrchestrator, IngestionPipeline]:
         (RAGOrchestrator, IngestionPipeline) tuple ready for use by the API.
     """
     settings = get_settings()
-    logger.info("Building RAG components")
+    strategy = settings.retrieval_strategy
+    logger.info("Building RAG components", retrieval_strategy=strategy)
+
+    if strategy not in _VALID_STRATEGIES:
+        raise ValueError(
+            f"Unknown retrieval_strategy '{strategy}'. "
+            f"Valid options: {sorted(_VALID_STRATEGIES)}"
+        )
 
     # ── Shared infrastructure ─────────────────────────────────────────────────
     embedder = OpenAIEmbedder(model=settings.embedding_model)
@@ -52,7 +109,7 @@ def get_rag_components() -> tuple[RAGOrchestrator, IngestionPipeline]:
     )
 
     # ── Query pipeline ────────────────────────────────────────────────────────
-    retriever = DenseRetriever(embedder=embedder, vector_store=vector_store)
+    retriever = _build_retriever(strategy, embedder, vector_store, settings)
     generator = OpenAIGenerator(
         model=settings.openai_model,
         temperature=0.0,
@@ -60,5 +117,5 @@ def get_rag_components() -> tuple[RAGOrchestrator, IngestionPipeline]:
     )
     orchestrator = RAGOrchestrator(retriever=retriever, generator=generator)
 
-    logger.info("RAG components ready")
+    logger.info("RAG components ready", retrieval_strategy=strategy)
     return orchestrator, pipeline

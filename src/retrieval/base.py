@@ -101,6 +101,19 @@ class VectorStore(Protocol):
         """
         ...
 
+    def get_all_chunks(self) -> list[Chunk]:
+        """Return every chunk currently stored in the vector store.
+
+        Used by BM25Retriever to build its in-memory index on startup.
+
+        Returns:
+            All Chunk objects in arbitrary order.
+
+        Raises:
+            RetrievalError: On read failure.
+        """
+        ...
+
 
 class Retriever(Protocol):
     """High-level interface: embed a query and return top-K RetrievedChunks.
@@ -109,11 +122,10 @@ class Retriever(Protocol):
     Embedder + VectorStore two-step from callers that don't need to know
     about the internals.
 
-    V1 implementation: SimilarityRetriever — wraps OpenAIEmbedder + ChromaStore.
+    V1 implementation: DenseRetriever — wraps OpenAIEmbedder + ChromaStore.
     V2 implementation: HybridRetriever — combines dense vector search with BM25
-        keyword search, re-ranks with a cross-encoder model.
-    V3 implementation: AgentRetriever — multi-hop: decomposes complex queries
-        into sub-queries, retrieves for each, deduplicates, and re-ranks.
+        keyword search, fused with Reciprocal Rank Fusion.
+    V3 implementation: RerankedRetriever — wraps any Retriever with a cross-encoder.
     """
 
     def retrieve(self, query: str, top_k: int) -> list[RetrievedChunk]:
@@ -128,5 +140,33 @@ class Retriever(Protocol):
 
         Raises:
             RetrievalError: If embedding or vector search fails.
+        """
+        ...
+
+
+class Reranker(Protocol):
+    """Re-scores and re-orders a candidate list using a cross-encoder model.
+
+    Takes a query and a set of already-retrieved candidates, then applies a
+    more expensive but more accurate relevance model. Sits between retrieval
+    and generation; the Orchestrator never calls it directly.
+
+    V1 implementation: CrossEncoderReranker — sentence-transformers cross-encoder,
+        ms-marco-MiniLM-L-6-v2, runs on CPU, ~15ms per batch of 50 candidates.
+    """
+
+    def rerank(
+        self, query: str, candidates: list[RetrievedChunk], top_k: int
+    ) -> list[RetrievedChunk]:
+        """Re-score candidates and return the top_k most relevant.
+
+        Args:
+            query: The original natural language question.
+            candidates: Pre-retrieved chunks to re-score.
+            top_k: Number of chunks to return after reranking.
+
+        Returns:
+            Top-k RetrievedChunks ordered by descending reranker score.
+            Each chunk's score field is updated to the reranker score.
         """
         ...

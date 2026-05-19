@@ -1,11 +1,10 @@
 # DocuVerse — Iteration Log
 
-Tracks the qualitative story of each phase: what we learned, what we changed, and why.
-Quantitative evaluation metrics will appear starting Phase 4.
+Tracks the qualitative story of each phase: what we built, what we learned, what we changed, and the measured impact.
 
 ---
 
-## Phase 0 — Foundation (current)
+## Phase 0 — Foundation
 
 **Goal:** Runnable skeleton. `docker compose up`, `GET /health → 200`, Streamlit shell.
 
@@ -27,7 +26,7 @@ Quantitative evaluation metrics will appear starting Phase 4.
 
 ---
 
-## Phase 1 — Core RAG Pipeline (current)
+## Phase 1 — Core RAG Pipeline
 
 **Goal:** End-to-end working RAG: upload PDF → ask question → cited answer.
 
@@ -76,7 +75,7 @@ Quantitative evaluation metrics will appear starting Phase 4.
 - NaN scores (edge cases where RAGAS can't compute a metric) serialise as JSON `null`, excluded from aggregate stats
 - Eval script runs in-process (no Docker stack required) for simplicity at V1
 
-**V1 Baseline Scores** *(Run `89192d11`, 2026-05-18, 20 samples, gpt-4o-mini judge)*
+**V1 Baseline Scores** *(Run `89192d11`, 2026-05-18, 20 samples on toy Solar System corpus, gpt-4o-mini judge)*
 
 | Metric | Mean | Std |
 |--------|------|-----|
@@ -89,17 +88,11 @@ Category breakdown: simple_lookup 0.976 · multi_fact 0.939 · cross_chunk 0.912
 
 **Interpretation**
 
-- All four metrics are **above the 0.75 production threshold** — V1 dense retrieval on this narrow domain is stronger than predicted.
+- All four metrics are **above the 0.75 production threshold** — but on a tiny 9-chunk corpus where top-5 retrieval is trivial. This baseline is artificially inflated; Phase 3a re-runs it on a realistic corpus.
 - **negative (0.392)** is intentionally low: the system correctly refuses unanswerable questions, but RAGAS penalises the text mismatch. Expected and acceptable.
 - **answer_relevancy (0.846)** has the highest variance (std=0.287) — negative/edge_case questions drag the mean. Simple/multi-fact score ≈0.99.
 - **faithfulness (0.892)** — citation prompt is working; minimal hallucination.
 - **context_recall (0.942)** — top-5 retrieval on a 9-chunk corpus surfaces nearly everything. Will likely decrease on larger document sets.
-
-**Next Steps (Phase 3 iteration targets)**
-- Improve context_recall via hybrid retrieval (BM25 + dense) — target: +0.10 lift
-- Improve faithfulness via cross-encoder reranking — surface the most grounded chunks first
-- Add Phase 2 eval to CI: `pytest tests/unit/test_evaluator.py` (mocked, free)
-- Monitor: any metric below 0.60 is a priority fix; target >0.75 across all for production
 
 ---
 
@@ -147,159 +140,63 @@ Category breakdown: simple_lookup 0.898 · multi_fact 0.727 · cross_chunk 0.777
 | context_recall | 0.942 | 0.819 | -0.123 |
 
 - All four metrics remain above the 0.75 production threshold — barely. context_precision (0.753) is the tightest.
-- **multi_fact (0.727)** drops below 0.75 — the dense retriever struggles to surface all relevant chunks for questions requiring synthesis across multiple constitutional articles. This is the primary target for Phase 3 hybrid retrieval.
+- **multi_fact (0.727)** drops below 0.75 — the dense retriever struggles to surface all relevant chunks for questions requiring synthesis across multiple constitutional articles. This is the primary target for Phase 4 hybrid retrieval.
 - **context_precision drop (-0.143)** is the largest regression. The bilingual Constitution text creates noise chunks (Kannada pages) that get retrieved alongside relevant English ones, diluting precision.
 - **negative (0.400)** is again intentionally low and expected; no change from V1 pattern.
 - **simple_lookup (0.898)** holds strong — the system can still find and cite isolated facts reliably.
 
-**Next Steps (Phase 3 targets)**
-- Hybrid retrieval (BM25 + dense) to improve multi_fact and context_recall — BM25 is robust to lexical matches across language-mixed text
-- Cross-encoder reranking to suppress Kannada noise chunks from Constitution results (improving context_precision)
-- Consider filtering chunks by language at ingest time, or re-downloading a pure English Constitution PDF
-- Add this eval to CI regression guard: any metric below 0.70 is a priority fix
-
 ---
 
-## Phase 3 — Generation
+## Phase 4 — Hybrid Retrieval + Cross-Encoder Reranking
 
-**Goal:** GPT-4o-mini with cited answers; end-to-end RAG pipeline live.
+**Date:** 2026-05-19
+**Goal:** Replace pure dense retrieval with a hybrid BM25 + dense pipeline fused via Reciprocal Rank Fusion, then add a cross-encoder reranker as a second stage. Measure the impact on the v1-realistic-baseline dataset.
 
----
+**Completed:**
+- `src/retrieval/base.py` — added `Reranker` Protocol; added `get_all_chunks()` to `VectorStore` Protocol
+- `src/retrieval/vector_store.py` — implemented `get_all_chunks()` on `ChromaVectorStore` (calls `collection.get()`, reconstructs `Chunk` objects)
+- `src/retrieval/bm25_retriever.py` — `BM25Retriever`: builds `BM25Okapi` index at construction from all chunks; lowercase whitespace tokenization; scores normalized to [0,1] by dividing by max
+- `src/retrieval/hybrid_retriever.py` — `HybridRetriever`: fetches top-20 from dense + top-20 from BM25, fuses with RRF (k=60); deduplicates by chunk_id; returns top-k by fused score
+- `src/retrieval/cross_encoder_reranker.py` — `CrossEncoderReranker`: ms-marco-MiniLM-L-6-v2 via sentence-transformers; lazy model loading on first rerank() call; sigmoid-normalizes logits to [0,1]
+- `src/retrieval/reranked_retriever.py` — `RerankedRetriever` decorator: fetches 50 candidates from any base Retriever, reranks to top-k
+- `src/factory.py` — strategy dispatch: dense / sparse / hybrid / reranked_hybrid; reads from `RETRIEVAL_STRATEGY` env var
+- `config/settings.py` / `config/config.yaml` / `.env.example` — 6 new configuration fields
+- `requirements.txt` — added rank-bm25==0.2.2, sentence-transformers==3.4.1
+- 37 new unit tests (95 total, all passing)
 
-## Phase 4 — Evaluation
+**V1 Phase 4 Scores** *(Run `ab12c0f5`, 2026-05-19, 40 samples, gpt-4o-mini judge, reranked_hybrid strategy)*
 
-**Goal:** RAGAS harness, baseline scores, regression guard in CI.
+| Metric | Phase 3a (dense) | Phase 4 (reranked_hybrid) | Delta |
+|--------|-----------------|--------------------------|-------|
+| faithfulness | 0.773 | **0.829** | **+0.056** |
+| answer_relevancy | 0.758 | **0.779** | **+0.021** |
+| context_precision | 0.753 | 0.746 | -0.007 |
+| context_recall | 0.819 | 0.819 | 0.000 |
 
----
+Category breakdown comparison:
 
-## Phase 5 — Production Hardening
+| Category | Phase 3a | Phase 4 | Delta |
+|----------|----------|---------|-------|
+| simple_lookup (n=16) | 0.898 | **0.963** | **+0.065** |
+| multi_fact (n=10) | 0.727 | **0.805** | **+0.078** |
+| cross_chunk (n=6) | 0.777 | 0.670 | -0.107 |
+| edge_case (n=4) | 0.781 | 0.720 | -0.061 |
+| negative (n=4) | 0.400 | 0.344 | -0.056 |
 
-**Goal:** CI/CD, observability, rate limiting, auth stubs.
+**Interpretation**
 
----
+- **faithfulness +0.056** — the cross-encoder is surfacing more grounded chunks as the top-5, reducing hallucination. Primary goal achieved.
+- **multi_fact +0.078** — the most important improvement. BM25 + dense fusion ensures keyword-critical chunks (specific article numbers, named sections) are not missed by the embedding model alone. This was Phase 3a's identified primary weakness; Phase 4 targeted and fixed it.
+- **simple_lookup +0.065** — straightforward fact lookup benefits from hybrid coverage.
+- **cross_chunk -0.107** — the most significant regression. Cross-chunk questions require diverse chunks from different parts of the document. The reranker, trained on single-passage relevance (MS MARCO), compresses the candidate pool too aggressively and drops chunks that are individually lower-scoring but collectively necessary for multi-hop synthesis. This is a known limitation of point-wise rerankers.
+- **context_precision -0.007** — within noise, essentially flat. The bilingual Constitution noise issue persists; BM25 does not help here (it is language-agnostic but still retrieves Kannada chunks that match query tokens).
+- **context_recall 0.000** — no change. The corpus coverage from Phase 3a already sets the ceiling; top-5 retrieval on 1372 chunks has the same recall ceiling regardless of retrieval order.
 
-## Phase 2 Evaluation: v1-baseline
+**Honest trade-off summary**
 
-**Date:** 2026-05-18
-**Dataset:** 3 questions covering 5 categories (simple_lookup, multi_fact, cross_chunk, negative, edge_case)
-**Judge model:** gpt-4o-mini
-**Run ID:** `65c9c190-ce90-4164-ab63-e80dcd08c960`
+Phase 4 is a net improvement on the metrics the system was designed to optimize (faithfulness, multi-fact accuracy) but introduces a regression on synthesis queries. The eval surfaced this trade-off before deployment — without RAGAS, the cross-chunk degradation would have shipped silently. This is the eval-driven development discipline working as intended: visible trade-offs are better than invisible regressions.
 
-### V1 Baseline Scores
-
-| Metric | Score |
-|--------|-------|
-| faithfulness | 1.000 |
-| answer_relevancy | 0.991 |
-| context_precision | 0.900 |
-| context_recall | 1.000 |
-
-### Interpretation
-
-- **faithfulness**: Measures whether generated answers are grounded in retrieved context. Low values indicate hallucination.
-- **answer_relevancy**: Measures whether the answer actually addresses the question. Low values indicate off-topic responses.
-- **context_precision**: Measures whether retrieved chunks are relevant (signal vs noise). Low values indicate poor retrieval ranking.
-- **context_recall**: Measures whether retrieved chunks contain all information needed to answer. Low values indicate missing coverage.
-
-### Next Steps
-
-- Phase iteration targets: improve context_recall via hybrid retrieval (BM25 + dense)
-- Improve faithfulness via reranking to surface the most grounded chunks
-- Monitor: any metric below 0.6 is a priority fix; target >0.75 across all metrics for production
-
-
----
-
-## Phase 2 Evaluation: v1-baseline
-
-**Date:** 2026-05-18
-**Dataset:** 20 questions covering 5 categories (simple_lookup, multi_fact, cross_chunk, negative, edge_case)
-**Judge model:** gpt-4o-mini
-**Run ID:** `89192d11-4ebd-47a4-8a60-93e77a31690e`
-
-### V1 Baseline Scores
-
-| Metric | Score |
-|--------|-------|
-| faithfulness | 0.892 |
-| answer_relevancy | 0.846 |
-| context_precision | 0.896 |
-| context_recall | 0.942 |
-
-### Interpretation
-
-- **faithfulness**: Measures whether generated answers are grounded in retrieved context. Low values indicate hallucination.
-- **answer_relevancy**: Measures whether the answer actually addresses the question. Low values indicate off-topic responses.
-- **context_precision**: Measures whether retrieved chunks are relevant (signal vs noise). Low values indicate poor retrieval ranking.
-- **context_recall**: Measures whether retrieved chunks contain all information needed to answer. Low values indicate missing coverage.
-
-### Next Steps
-
-- Phase iteration targets: improve context_recall via hybrid retrieval (BM25 + dense)
-- Improve faithfulness via reranking to surface the most grounded chunks
-- Monitor: any metric below 0.6 is a priority fix; target >0.75 across all metrics for production
-
-
----
-
-## Phase 2 Evaluation: v1-realistic-smoke
-
-**Date:** 2026-05-18
-**Dataset:** 5 questions covering 5 categories (simple_lookup, multi_fact, cross_chunk, negative, edge_case)
-**Judge model:** gpt-4o-mini
-**Run ID:** `32afbadd-c867-4318-828a-b9b8f9d18369`
-
-### V1 Baseline Scores
-
-| Metric | Score |
-|--------|-------|
-| faithfulness | 0.705 |
-| answer_relevancy | 0.772 |
-| context_precision | 0.757 |
-| context_recall | 0.900 |
-
-### Interpretation
-
-- **faithfulness**: Measures whether generated answers are grounded in retrieved context. Low values indicate hallucination.
-- **answer_relevancy**: Measures whether the answer actually addresses the question. Low values indicate off-topic responses.
-- **context_precision**: Measures whether retrieved chunks are relevant (signal vs noise). Low values indicate poor retrieval ranking.
-- **context_recall**: Measures whether retrieved chunks contain all information needed to answer. Low values indicate missing coverage.
-
-### Next Steps
-
-- Phase iteration targets: improve context_recall via hybrid retrieval (BM25 + dense)
-- Improve faithfulness via reranking to surface the most grounded chunks
-- Monitor: any metric below 0.6 is a priority fix; target >0.75 across all metrics for production
-
-
----
-
-## Phase 2 Evaluation: v1-realistic-baseline
-
-**Date:** 2026-05-18
-**Dataset:** 40 questions covering 5 categories (simple_lookup, multi_fact, cross_chunk, negative, edge_case)
-**Judge model:** gpt-4o-mini
-**Run ID:** `a14988ca-d8fc-47ee-ae73-53b683e3b3d8`
-
-### V1 Baseline Scores
-
-| Metric | Score |
-|--------|-------|
-| faithfulness | 0.773 |
-| answer_relevancy | 0.758 |
-| context_precision | 0.753 |
-| context_recall | 0.819 |
-
-### Interpretation
-
-- **faithfulness**: Measures whether generated answers are grounded in retrieved context. Low values indicate hallucination.
-- **answer_relevancy**: Measures whether the answer actually addresses the question. Low values indicate off-topic responses.
-- **context_precision**: Measures whether retrieved chunks are relevant (signal vs noise). Low values indicate poor retrieval ranking.
-- **context_recall**: Measures whether retrieved chunks contain all information needed to answer. Low values indicate missing coverage.
-
-### Next Steps
-
-- Phase iteration targets: improve context_recall via hybrid retrieval (BM25 + dense)
-- Improve faithfulness via reranking to surface the most grounded chunks
-- Monitor: any metric below 0.6 is a priority fix; target >0.75 across all metrics for production
-
+**Next steps (Phase 4b candidates, not yet executed)**
+- Increase `top_k` from 5 to 8 for the reranker to give the generator more diverse context (cheap, low-risk)
+- Use a list-wise reranker (ColBERT, BGE Reranker) that considers cross-chunk diversity
+- Filter bilingual Constitution chunks by language at ingest time, or re-download a pure-English Constitution PDF

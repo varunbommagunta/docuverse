@@ -1,6 +1,7 @@
-# DocuVerse component selection — V1 (Phase 1)
+# DocuVerse component selection
 # Each key maps a Protocol to the concrete implementation class that satisfies it.
-# The factory in src/factory.py reads these to wire up the pipeline.
+# The factory in src/factory.py reads retrieval_strategy from Settings to wire
+# the appropriate retriever chain.
 
 ingestion:
   parser: src.ingestion.parsers.PyPDFParser
@@ -9,7 +10,13 @@ ingestion:
 retrieval:
   embedder: src.retrieval.embedders.OpenAIEmbedder
   vector_store: src.retrieval.vector_store.ChromaVectorStore
-  retriever: src.retrieval.dense_retriever.DenseRetriever
+
+  # Strategy options (set RETRIEVAL_STRATEGY env var to switch):
+  #   dense            — DenseRetriever (cosine similarity only, default)
+  #   sparse           — BM25Retriever (keyword search only)
+  #   hybrid           — HybridRetriever (dense + BM25, fused with RRF)
+  #   reranked_hybrid  — RerankedRetriever(HybridRetriever + CrossEncoderReranker)
+  strategy: dense
 
 generation:
   generator: src.generation.openai_generator.OpenAIGenerator
