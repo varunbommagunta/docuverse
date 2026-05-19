@@ -33,9 +33,9 @@ CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')"
 
 # Process manager and reverse-proxy configuration
 # sed converts Windows CRLF → Unix LF
-COPY docker/nginx.conf /etc/nginx/sites-available/default
+COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisor/docuverse.conf
-RUN sed -i 's/\r$//' /etc/nginx/sites-available/default /etc/supervisor/docuverse.conf
+RUN sed -i 's/\r$//' /etc/nginx/nginx.conf /etc/supervisor/docuverse.conf
 
 # Application source (filtered by .dockerignore)
 COPY . .
