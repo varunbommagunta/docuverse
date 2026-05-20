@@ -18,7 +18,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
 from api.middleware.cost_cap import DailyCostCapMiddleware
-from api.routes import health, ingest, query
+from api.routes import corpus, health, ingest, query
 from src.utils.logger import configure_logging
 
 logger = structlog.get_logger(__name__)
@@ -107,6 +107,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # ty
 app.include_router(health.router)
 app.include_router(ingest.router)
 app.include_router(query.router)
+app.include_router(corpus.router)
 
 # Middleware applied in LIFO order: SlowAPI (outermost) → CostCap → routes
 from config.settings import get_settings as _get_settings

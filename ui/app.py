@@ -21,6 +21,19 @@ st.set_page_config(
 # ── Session state initialisation ──────────────────────────────────────────────
 if "ingested_docs" not in st.session_state:
     st.session_state.ingested_docs: list[dict] = []
+    # Check if the backend has a pre-loaded corpus (auto-ingested at startup)
+    try:
+        response = requests.get(f"{API_URL}/corpus/info", timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("is_preloaded"):
+                for doc in data.get("documents", []):
+                    st.session_state.ingested_docs.append({
+                        "filename": doc["filename"],
+                        "chunk_count": doc["chunk_count"],
+                    })
+    except Exception:
+        pass
 if "messages" not in st.session_state:
     st.session_state.messages: list[dict] = []
 
@@ -85,6 +98,13 @@ with st.sidebar:
                 st.error(f"Unexpected error: {exc}")
 
     st.divider()
+
+    preloaded_filenames = {"constitution_of_india.pdf", "arc_ethics_governance.pdf"}
+    has_preloaded = any(
+        doc["filename"] in preloaded_filenames for doc in st.session_state.ingested_docs
+    )
+    if has_preloaded:
+        st.success("📚 Indian Constitution + ARC Ethics corpus pre-loaded — ask questions immediately!")
 
     if st.session_state.ingested_docs:
         st.subheader("Indexed this session")
