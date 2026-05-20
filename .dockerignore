@@ -16,7 +16,6 @@ data/chroma_db/
 data/eval/
 docs/
 tests/
-scripts/
 .github/
 .vscode/
 .idea/
