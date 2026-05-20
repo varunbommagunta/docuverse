@@ -75,6 +75,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             else:
                 new_count = collection.count()
                 logger.info("auto_ingest_complete", chunks_ingested=new_count)
+                if new_count > 0:
+                    logger.info("rebuilding_components_after_ingest", chunk_count=new_count)
+                    from src.factory import get_rag_components
+                    new_orchestrator, new_pipeline = get_rag_components()
+                    app.state.orchestrator = new_orchestrator
+                    app.state.pipeline = new_pipeline
+                    logger.info("components_rebuilt", reason="auto_ingest_populated_db")
         elif chunk_count > 0:
             logger.info("auto_ingest_skipped", reason="db_already_populated", chunk_count=chunk_count)
         else:
