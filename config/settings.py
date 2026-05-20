@@ -7,7 +7,7 @@ principle: config comes from the environment, not from code.
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     # ── OpenAI ────────────────────────────────────────────────────────────────
     openai_api_key: str = Field(default="", description="OpenAI secret key.")
     openai_model: str = Field(default="gpt-4o-mini", description="Chat completion model.")
+
+    @field_validator("openai_api_key", mode="before")
+    @classmethod
+    def _strip_openai_key(cls, v):
+        if isinstance(v, str):
+            return v.strip()
+        return v
 
     # ── Embedding ─────────────────────────────────────────────────────────────
     embedding_model: str = Field(
