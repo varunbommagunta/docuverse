@@ -11,175 +11,116 @@ pinned: false
 
 # DocuVerse
 
-![Python](https://img.shields.io/badge/python-3.12-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.45-red)
-![License](https://img.shields.io/badge/license-MIT-lightgrey)
-![Phase](https://img.shields.io/badge/phase-0%20%E2%80%94%20Foundation-orange)
+**Production-grade Retrieval-Augmented Generation over Indian government documents.**
 
-**DocuVerse** is a production-grade Retrieval-Augmented Generation (RAG) system. Upload PDFs, ask questions in natural language, and receive cited answers grounded in your documents.
+[![Live Demo](https://img.shields.io/badge/Live_Demo-HF_Spaces-brightgreen)](https://varunbommagunta-docuverse.hf.space) [![Tests](https://img.shields.io/badge/Tests-95_passing-success)](tests/) [![Python](https://img.shields.io/badge/Python-3.12-blue)](https://python.org)
 
----
+A complete, end-to-end RAG system over 1372 chunks of real Indian government text (Constitution of India, ARC Ethics Report), with quality measured by RAGAS across five development phases and deployed as a production Docker container on Hugging Face Spaces. The engineering log documents every measurable change and honest trade-off.
 
-## What It Does
-
-| Feature | Status |
-|---|---|
-| PDF upload & parsing | Phase 1 |
-| Semantic chunking | Phase 1 |
-| Vector embedding & storage | Phase 2 |
-| Similarity retrieval | Phase 2 |
-| LLM-generated cited answers | Phase 3 |
-| Evaluation harness | Phase 4 |
-| CI/CD + observability | Phase 5 |
+**[Try it live — https://varunbommagunta-docuverse.hf.space](https://varunbommagunta-docuverse.hf.space)**
+Sample question: *"What does Article 21 of the Indian Constitution protect?"*
 
 ---
 
-## Current Phase Status
+## Key Results
 
-**Phase 0 — Foundation** is complete. The scaffold is wired end-to-end:
+| Metric | V1 Baseline (Phase 3a) | Phase 4 (Hybrid + Rerank) | Delta |
+|--------|------------------------|---------------------------|-------|
+| Faithfulness | 0.773 | 0.829 | +0.056 |
+| Answer Relevance | 0.758 | 0.779 | +0.021 |
+| Context Precision | 0.753 | 0.746 | -0.007 |
+| Context Recall | 0.819 | 0.819 | 0.000 |
 
-- `GET /health` returns `{"status": "ok"}`
-- Streamlit UI renders "Hello DocuVerse"
-- All Protocol interfaces are defined; no implementations yet
-- `docker compose up` starts both services
+- Faithfulness and multi-fact synthesis improved measurably with hybrid retrieval + cross-encoder reranking.
+- Cross-chunk queries regressed -10.7% (point-wise reranker limitation, documented in [docs/ITERATION_LOG.md](docs/ITERATION_LOG.md)).
+
+Full eval methodology, raw JSON results, and engineering decision log in [docs/](docs/).
 
 ---
 
 ## Architecture
 
+```mermaid
+flowchart TD
+    Browser["Browser"]
+    Ingress["HF Spaces Ingress"]
+    Nginx["nginx\n(docker/nginx.conf)\nport 7860"]
+    Streamlit["Streamlit\n(ui/app.py)\nport 8501"]
+    FastAPI["FastAPI\n(api/routes/)\nport 8000"]
+    Orchestrator["Orchestrator\n(src/orchestrator.py)"]
+    Retriever["RerankedHybridRetriever\nBM25 + Dense + RRF + Reranker\n(src/retrieval/)"]
+    Generator["Generator · gpt-4o-mini\n(src/generation/openai_generator.py)"]
+    ChromaDB["ChromaDB\n1372 chunks\n(data/chroma_db/)"]
+    OpenAI["OpenAI API\ntext-embedding-3-small · gpt-4o-mini"]
+
+    Browser --> Ingress
+    Ingress --> Nginx
+    Nginx --> Streamlit
+    Nginx --> FastAPI
+    Streamlit -.->|"POST /api/query"| FastAPI
+    FastAPI --> Orchestrator
+    Orchestrator --> Retriever
+    Orchestrator --> Generator
+    Retriever --> ChromaDB
+    Retriever --> OpenAI
+    Generator --> OpenAI
+
+    style Browser fill:#FFE0B2
+    style ChromaDB fill:#C8E6C9
+    style OpenAI fill:#FCE4EC
 ```
-┌─────────────────────────────────────────────────────────┐
-│                        DocuVerse                        │
-│                                                         │
-│  ┌──────────┐   HTTP    ┌──────────────────────────┐   │
-│  │Streamlit │ ────────▶ │  FastAPI  (api/)          │   │
-│  │  (ui/)   │           │  /health  /upload  /ask   │   │
-│  └──────────┘           └────────────┬─────────────┘   │
-│                                      │                  │
-│                               calls  │                  │
-│                                      ▼                  │
-│                          ┌───────────────────────┐      │
-│                          │  RAGOrchestrator       │      │
-│                          │  (src/orchestrator.py) │      │
-│                          └──┬──────────┬──────────┘      │
-│                             │          │                  │
-│                  ┌──────────▼──┐  ┌────▼──────────┐      │
-│                  │  Retriever  │  │  Generator    │      │
-│                  │  Protocol   │  │  Protocol     │      │
-│                  └──────────┬──┘  └────┬──────────┘      │
-│                             │          │                  │
-│              ┌──────────────▼──┐  ┌────▼──────────┐      │
-│              │ VectorStore     │  │  OpenAI GPT   │      │
-│              │ (Phase 2: Chroma│  │  (Phase 3)    │      │
-│              │  / pgvector)    │  └───────────────┘      │
-│              └─────────────────┘                         │
-│                                                          │
-│  src/ = business logic (pure Python, no HTTP)            │
-│  api/ = HTTP adapter  │  ui/ = Streamlit adapter         │
-└─────────────────────────────────────────────────────────┘
-```
+
+A modular monolith with Protocol-based components running in a single Docker container: nginx on port 7860 routes `/api/*` to FastAPI (port 8000) and everything else to Streamlit (port 8501), with supervisord managing both processes. Four swappable retrieval strategies (dense, sparse, hybrid, reranked_hybrid) are selected at startup via the `RETRIEVAL_STRATEGY` env var. ChromaDB persists the 1372-chunk index to disk. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full breakdown.
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| API | FastAPI 0.115 + Uvicorn |
-| UI | Streamlit 1.45 |
-| Config | Pydantic-Settings + .env |
-| Logging | Structlog (JSON) |
-| Embedding | OpenAI text-embedding-3-small |
-| LLM | OpenAI gpt-4o-mini |
-| Vector DB | Chroma (Phase 2) |
-| Testing | Pytest + HTTPX |
-| Linting | Ruff |
-| Typing | Mypy (strict) |
-| Container | Docker + Docker Compose |
+- **Deployment:** Hugging Face Spaces, Docker, nginx, supervisord
+- **API:** FastAPI, slowapi, Pydantic Settings
+- **UI:** Streamlit
+- **Retrieval:** ChromaDB, OpenAI text-embedding-3-small, rank-bm25, sentence-transformers
+- **Generation:** OpenAI gpt-4o-mini with citation-forcing prompt
+- **Evaluation:** RAGAS 0.4.3 with gpt-4o-mini judge
+- **Quality:** 95 unit tests, structlog JSON logging
+
+---
+
+## Engineering Phases
+
+- **Phase 0** — Project scaffold: Ports-and-Adapters layout, Protocol interfaces, health endpoint, Streamlit shell, Docker Compose
+- **Phase 1** — Core RAG pipeline: PDF parsing, recursive chunking, OpenAI embeddings, ChromaDB vector store, cited answer generation
+- **Phase 2** — Scientific evaluation: RAGAS harness, 20-question dataset, baseline scorecard on toy corpus
+- **Phase 3a** — Corpus expansion: real Indian government PDFs (Constitution, ARC Ethics), 1372 chunks, honest realistic baseline
+- **Phase 4** — Hybrid retrieval + cross-encoder reranking: BM25 + dense RRF fusion, ms-marco reranker, +5.6 pp faithfulness
+- **Phase 5** — Production hardening: rate limiting, daily cost cap, single-container HF Spaces deployment with nginx routing
+
+Full story in [docs/ITERATION_LOG.md](docs/ITERATION_LOG.md).
 
 ---
 
 ## Running Locally
 
-### Prerequisites
-
-- Python 3.12+
-- Docker & Docker Compose (for containerised run)
-
-### Quick start (local)
-
 ```bash
-# 1. Clone and enter the repo
-git clone https://github.com/your-username/docuverse.git
+git clone https://github.com/varunbommagunta/docuverse.git
 cd docuverse
-
-# 2. Create a virtual environment
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-
-# 3. Install all dependencies
-make install-dev
-
-# 4. Copy env template and add your OpenAI key
-cp .env.example .env
-# edit .env: set OPENAI_API_KEY=sk-...
-
-# 5a. Start the API server
-make api         # http://localhost:8000
-
-# 5b. In a separate terminal, start the UI
-make ui          # http://localhost:8501
+cp .env.example .env        # add OPENAI_API_KEY=sk-...
+docker compose up
 ```
 
-### Docker Compose
-
-```bash
-cp .env.example .env   # fill in OPENAI_API_KEY
-make docker-up         # builds and starts api + ui
-```
-
-### Run tests
-
-```bash
-make test
-```
+Open http://localhost:8000 for the API and http://localhost:8501 for the UI.
 
 ---
 
-## Planned Phases
+## Honest Limitations
 
-| Phase | Goal |
-|---|---|
-| **0** | Project scaffold, health endpoint, Streamlit shell ✅ |
-| **1** | PDF ingestion — parse, chunk, validate |
-| **2** | Embedding + Chroma vector store + retrieval |
-| **3** | LLM generation with cited answers |
-| **4** | Evaluation harness (RAGAS metrics) |
-| **5** | CI/CD, observability, production hardening |
-
----
-
-## Project Structure
-
-```
-docuverse/
-├── api/            # FastAPI HTTP adapter
-├── config/         # Pydantic-Settings + YAML component selection
-├── data/           # Sample PDFs (gitignored after Phase 1)
-├── docs/           # Architecture notes and iteration log
-├── scripts/        # One-off utility scripts
-├── src/            # Business logic — all Protocols + implementations
-│   ├── ingestion/  # Parser, Chunker protocols
-│   ├── retrieval/  # Embedder, VectorStore, Retriever protocols
-│   ├── generation/ # Generator protocol
-│   └── utils/      # Logger, exceptions, Pydantic models
-├── tests/          # Pytest unit + integration suites
-└── ui/             # Streamlit frontend adapter
-```
+- HF Spaces free tier sleeps after inactivity — expect ~60s cold start
+- Cross-chunk queries regressed -10.7% in Phase 4; Phase 4b planned (list-wise reranker)
+- Daily INR 50 OpenAI cost cap — triggers HTTP 429 once exceeded
+- 6 MB upload limit; Constitution PDF (6.65 MB) accessible via API only
 
 ---
 
 ## License
 
-MIT © 2025 DocuVerse Contributors
+MIT
