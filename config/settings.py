@@ -95,6 +95,10 @@ class Settings(BaseSettings):
         description="Daily OpenAI spend cap in Indian Rupees. Rejected with 429 once exceeded.",
         gt=0,
     )
+    auto_ingest_on_startup: bool = Field(
+        default=True,
+        description="Auto-download and ingest the sample PDFs (Indian Constitution + ARC) if ChromaDB is empty at container startup.",
+    )
 
 
 @lru_cache(maxsize=1)
