@@ -99,6 +99,12 @@ Full story in [docs/ITERATION_LOG.md](docs/ITERATION_LOG.md).
 
 ---
 
+## Roadmap
+
+Future improvements organized by ML pipeline stage are documented in [docs/FUTURE_IMPROVEMENTS.md](docs/FUTURE_IMPROVEMENTS.md). The roadmap covers all 10 stages of the ML pipeline (parsing through evaluation) with concrete options for each, ranked by ML signal value and effort estimate.
+
+---
+
 ## Running Locally
 
 ```bash
