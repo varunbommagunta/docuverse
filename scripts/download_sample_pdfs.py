@@ -2,7 +2,7 @@
 """Download real Indian government PDFs for Phase 3a corpus expansion.
 
 Downloads two PDFs into data/sample/:
-  - constitution_of_india.pdf   (Constitution of India, legislative.gov.in)
+  - constitution_of_india.pdf   (Constitution of India, cdnbbsr.s3waas.gov.in)
   - arc_ethics_governance.pdf   (ARC 4th Report: Ethics in Governance, darpg.gov.in)
 
 Skips files that already exist. Retries once on network error. Exits non-zero
@@ -38,8 +38,8 @@ _HEADERS = {
 _PDFS = [
     {
         "filename": "constitution_of_india.pdf",
-        "url": "https://www.legislative.gov.in/static/uploads/2025/07/359f70a69695affb9d72f8393102bd2e.pdf",
-        "description": "Constitution of India (legislative.gov.in)",
+        "url": "https://cdnbbsr.s3waas.gov.in/s380537a945c7aaa788ccfcdf1b99b5d8f/uploads/2024/07/20240716890312078.pdf",
+        "description": "Constitution of India (cdnbbsr.s3waas.gov.in)",
     },
     {
         "filename": "arc_ethics_governance.pdf",
