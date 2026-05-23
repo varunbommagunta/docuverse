@@ -200,3 +200,47 @@ Phase 4 is a net improvement on the metrics the system was designed to optimize 
 - Increase `top_k` from 5 to 8 for the reranker to give the generator more diverse context (cheap, low-risk)
 - Use a list-wise reranker (ColBERT, BGE Reranker) that considers cross-chunk diversity
 - Filter bilingual Constitution chunks by language at ingest time, or re-download a pure-English Constitution PDF
+
+---
+
+## Phase 2 Evaluation: v1-baseline
+
+**Date:** 2026-05-23
+**Dataset:** 40 questions covering 5 categories (simple_lookup, multi_fact, cross_chunk, negative, edge_case)
+**Judge model:** gpt-4o-mini
+**Run ID:** `ce505563-bae8-42c7-95c2-6f9573147dfd`
+
+### V1 Baseline Scores
+
+| Metric | Score |
+|--------|-------|
+| faithfulness | 0.842 |
+| answer_relevancy | 0.709 |
+| context_precision | 0.744 |
+| context_recall | 0.792 |
+
+### Interpretation
+
+- **faithfulness**: Measures whether generated answers are grounded in retrieved context. Low values indicate hallucination.
+- **answer_relevancy**: Measures whether the answer actually addresses the question. Low values indicate off-topic responses.
+- **context_precision**: Measures whether retrieved chunks are relevant (signal vs noise). Low values indicate poor retrieval ranking.
+- **context_recall**: Measures whether retrieved chunks contain all information needed to answer. Low values indicate missing coverage.
+
+### Next Steps
+
+- Phase iteration targets: improve context_recall via hybrid retrieval (BM25 + dense)
+- Improve faithfulness via reranking to surface the most grounded chunks
+- Monitor: any metric below 0.6 is a priority fix; target >0.75 across all metrics for production
+
+
+---
+
+## Phase 6: Conversational Query Rewriting
+
+**Goal:** Fix follow-up queries that fail retrieval because the retriever is stateless and cannot resolve pronouns or implicit references against prior conversation turns.
+
+**The problem:** When a user asks "What does Article 312 cover?" and then asks "tell me more about that", the retriever embeds the literal string "tell me more about that" — a query with zero semantic connection to Article 312. ChromaDB and BM25 both return irrelevant chunks, the generator correctly refuses to answer, and the user experience breaks. This class of failure is invisible to RAGAS (which tests single-turn questions) but is the dominant failure mode in real conversational use.
+
+**The solution:** Before calling the retriever, an `OpenAIQueryRewriter` uses gpt-4o-mini to rewrite the user's query into a standalone question that incorporates the relevant context from the last 3 conversation turns. The rewriter runs with `temperature=0` and a focused system prompt that instructs it to preserve specific identifiers (article numbers, section names) and return the query unchanged if it is already standalone. The rewritten query goes to the retriever; the generator still receives the user's original query so the final answer reads naturally. The rewriter is wired in as an optional component via `QueryRewriter` Protocol in `src/retrieval/base.py` and controlled by `ENABLE_QUERY_REWRITING` (default: true) in settings.
+
+**Trade-offs and honest scope:** The rewriter adds one extra gpt-4o-mini call per query when history is present, costing roughly ₹0.01 per follow-up at current pricing — negligible relative to the generation call but non-zero. A robust try/except fallback ensures any rewriter failure (API timeout, rate limit) silently returns the original query rather than crashing the request. The rewriter handles the common pronoun and reference cases ("that", "it", "tell me more") well but will not fix comparison queries that require synthesising two prior topics — that remains a known limitation. Phase 6 has not been measured via RAGAS because the current 40-question eval dataset is single-turn; a multi-turn conversational eval dataset is required to quantify the improvement and is scoped as future work.

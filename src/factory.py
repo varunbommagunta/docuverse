@@ -21,6 +21,7 @@ from src.ingestion.parsers import PyPDFParser
 from src.ingestion.pipeline import IngestionPipeline
 from src.orchestrator import RAGOrchestrator
 from src.retrieval.dense_retriever import DenseRetriever
+from src.retrieval.query_rewriter import OpenAIQueryRewriter
 from src.retrieval.embedders import OpenAIEmbedder
 from src.retrieval.vector_store import ChromaVectorStore
 
@@ -115,7 +116,18 @@ def get_rag_components() -> tuple[RAGOrchestrator, IngestionPipeline]:
         temperature=0.0,
         max_tokens=1024,
     )
-    orchestrator = RAGOrchestrator(retriever=retriever, generator=generator)
+
+    # Build query rewriter (or None if disabled)
+    if settings.enable_query_rewriting:
+        query_rewriter = OpenAIQueryRewriter(
+            api_key=settings.openai_api_key,
+            model=settings.query_rewriter_model,
+            max_history_turns=settings.query_rewriter_max_history_turns,
+        )
+    else:
+        query_rewriter = None
+
+    orchestrator = RAGOrchestrator(retriever=retriever, generator=generator, query_rewriter=query_rewriter)
 
     logger.info("RAG components ready", retrieval_strategy=strategy)
     return orchestrator, pipeline

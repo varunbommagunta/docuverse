@@ -18,26 +18,30 @@ logger = structlog.get_logger(__name__)
 class RAGOrchestrator:
     """Coordinates the RAG pipeline: retrieve relevant chunks, then generate an answer."""
 
-    def __init__(self, retriever: Retriever, generator: Generator) -> None:
+    def __init__(self, retriever: Retriever, generator: Generator, query_rewriter=None) -> None:
         """Inject retriever and generator dependencies.
 
         Args:
             retriever: Any object satisfying the Retriever Protocol.
             generator: Any object satisfying the Generator Protocol.
+            query_rewriter: Optional QueryRewriter for conversational follow-up handling.
         """
         self._retriever = retriever
         self._generator = generator
+        self._query_rewriter = query_rewriter
         logger.info(
             "RAGOrchestrator initialised",
             retriever=type(retriever).__name__,
             generator=type(generator).__name__,
+            query_rewriting_enabled=query_rewriter is not None,
         )
 
-    def answer(self, query: str) -> Answer:
+    def answer(self, query: str, history: list[dict] | None = None) -> Answer:
         """Run the full RAG pipeline for a user query.
 
         Args:
             query: Natural-language question from the user.
+            history: Optional conversation history for query rewriting.
 
         Returns:
             Answer with generated text, citation indices, and source chunks.
@@ -49,9 +53,15 @@ class RAGOrchestrator:
         log = logger.bind(query_length=len(query))
         log.info("Query received")
 
+        # Rewrite query if we have a rewriter AND history
+        if self._query_rewriter and history:
+            retrieval_query = self._query_rewriter.rewrite(query, history)
+        else:
+            retrieval_query = query
+
         # ── Step 1: Retrieve ──────────────────────────────────────────────────
         try:
-            chunks = self._retriever.retrieve(query, top_k=5)
+            chunks = self._retriever.retrieve(retrieval_query, top_k=5)
         except RetrievalError:
             raise
         except Exception as exc:

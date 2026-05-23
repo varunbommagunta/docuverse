@@ -170,3 +170,24 @@ class Reranker(Protocol):
             Each chunk's score field is updated to the reranker score.
         """
         ...
+
+
+class QueryRewriter(Protocol):
+    """Rewrites a user query using conversation history to make it standalone.
+
+    Resolves pronouns and implicit references against prior turns so the
+    retriever (which has no conversation memory) sees a self-contained query.
+    """
+
+    def rewrite(self, query: str, history: list[dict] | None = None) -> str:
+        """Rewrite query using conversation history.
+
+        Args:
+            query: The latest user question (may contain pronouns/references)
+            history: List of prior turns, each dict with 'role' and 'content'
+                     in OpenAI chat format. If None or empty, query is returned unchanged.
+
+        Returns:
+            A standalone query that can be retrieved against without conversation context.
+        """
+        ...

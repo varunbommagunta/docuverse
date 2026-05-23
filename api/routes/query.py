@@ -42,8 +42,12 @@ async def query_documents(
     except Exception:
         pass  # If we can't check, proceed and let retrieval fail naturally
 
+    history = None
+    if body.history:
+        history = [{"role": m.role, "content": m.content} for m in body.history]
+
     try:
-        answer = orchestrator.answer(body.query)
+        answer = orchestrator.answer(body.query, history=history)
     except RetrievalError as exc:
         raise HTTPException(status_code=500, detail=f"Retrieval error: {exc}") from exc
     except GenerationError as exc:

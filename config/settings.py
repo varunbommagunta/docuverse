@@ -85,6 +85,25 @@ class Settings(BaseSettings):
         gt=0,
     )
 
+    # ── Query rewriting ───────────────────────────────────────────────────────
+    enable_query_rewriting: bool = Field(
+        default=True,
+        description="Enable LLM-based query rewriting for conversational follow-ups. "
+        "Resolves pronouns and references against conversation history before retrieval.",
+    )
+    query_rewriter_model: str = Field(
+        default="gpt-4o-mini",
+        description="Model to use for query rewriting. Cheap models are preferred since "
+        "the rewriting task is straightforward.",
+    )
+    query_rewriter_max_history_turns: int = Field(
+        default=3,
+        description="Maximum number of conversation turns to include in the rewriter prompt. "
+        "Higher = more context but more tokens.",
+        ge=1,
+        le=10,
+    )
+
     # ── HuggingFace Spaces deployment ─────────────────────────────────────────
     hf_spaces_mode: bool = Field(
         default=False,

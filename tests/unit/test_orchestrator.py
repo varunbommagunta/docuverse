@@ -98,3 +98,50 @@ def test_answer_wraps_unexpected_generator_exception(
     mock_generator.generate.side_effect = RuntimeError("unexpected")
     with pytest.raises(GenerationError):
         orchestrator.answer("query")
+
+
+def test_orchestrator_calls_rewriter_when_history_provided():
+    mock_retriever = MagicMock()
+    mock_retriever.retrieve.return_value = []
+    mock_generator = MagicMock()
+    mock_generator.generate.return_value = MagicMock(text="answer", citations=[], chunks=[])
+    mock_rewriter = MagicMock()
+    mock_rewriter.rewrite.return_value = "rewritten query"
+
+    orchestrator = RAGOrchestrator(
+        retriever=mock_retriever,
+        generator=mock_generator,
+        query_rewriter=mock_rewriter,
+    )
+
+    history = [{"role": "user", "content": "prior question"}]
+    orchestrator.answer("follow up", history=history)
+
+    # Rewriter should be called
+    mock_rewriter.rewrite.assert_called_once_with("follow up", history)
+    # Retrieval should use rewritten query
+    mock_retriever.retrieve.assert_called_once_with("rewritten query", top_k=5)
+    # Generation uses ORIGINAL query
+    mock_generator.generate.assert_called_once()
+    assert mock_generator.generate.call_args.args[0] == "follow up"
+
+
+def test_orchestrator_skips_rewriter_when_no_history():
+    mock_retriever = MagicMock()
+    mock_retriever.retrieve.return_value = []
+    mock_generator = MagicMock()
+    mock_generator.generate.return_value = MagicMock(text="answer", citations=[], chunks=[])
+    mock_rewriter = MagicMock()
+
+    orchestrator = RAGOrchestrator(
+        retriever=mock_retriever,
+        generator=mock_generator,
+        query_rewriter=mock_rewriter,
+    )
+
+    orchestrator.answer("first question", history=None)
+
+    # Rewriter should NOT be called
+    mock_rewriter.rewrite.assert_not_called()
+    # Retrieval should use original query
+    mock_retriever.retrieve.assert_called_once_with("first question", top_k=5)

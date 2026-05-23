@@ -28,10 +28,21 @@ class IngestResponse(BaseModel):
 
 # ── Query ─────────────────────────────────────────────────────────────────────
 
+class ChatMessage(BaseModel):
+    """A single message in a conversation history."""
+
+    role: str = Field(..., description="Role: 'user' or 'assistant'")
+    content: str = Field(..., description="Message content")
+
+
 class QueryRequest(BaseModel):
     """Request body for POST /query."""
 
     query: str = Field(min_length=1, description="Natural-language question.")
+    history: list[ChatMessage] | None = Field(
+        default=None,
+        description="Conversation history for follow-up queries. Last N turns used for query rewriting.",
+    )
 
 
 class CitationDetail(BaseModel):

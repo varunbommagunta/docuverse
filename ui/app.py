@@ -147,9 +147,19 @@ if prompt := st.chat_input("Ask a question about your documents…"):
 
         with st.chat_message("assistant"), st.spinner("Thinking…"):
             try:
+                # Build history from session_state.messages (last 3 turns = 6 messages max)
+                history_to_send = []
+                if "messages" in st.session_state and len(st.session_state.messages) > 0:
+                    # Send last 6 messages (3 turns: 3 user + 3 assistant)
+                    recent_messages = st.session_state.messages[-6:]
+                    history_to_send = [
+                        {"role": m["role"], "content": m["content"]}
+                        for m in recent_messages
+                    ]
+
                 response = requests.post(
                     f"{API_URL}/query",
-                    json={"query": prompt},
+                    json={"query": prompt, "history": history_to_send if history_to_send else None},
                     timeout=60,
                 )
                 if response.status_code == 200:
