@@ -25,6 +25,11 @@ logger = structlog.get_logger(__name__)
 
 limiter = Limiter(key_func=get_remote_address, default_limits=["20/minute"])
 
+_AUTO_INGEST_PDFS: list[tuple[str, int | None]] = [
+    ("data/sample/constitution_of_india.pdf", None),   # all 402 pages
+    ("data/sample/arc_ethics_governance.pdf", 40),
+]
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -65,23 +70,34 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 else:
                     logger.info("downloads_complete")
 
-            logger.info("ingesting_corpus")
-            result = subprocess.run(
-                ["python3", "scripts/ingest_corpus.py"],
-                capture_output=True, text=True, timeout=600,
-            )
-            if result.returncode != 0:
-                logger.error("ingestion_failed", stderr=result.stderr[-2000:])
-            else:
-                new_count = collection.count()
-                logger.info("auto_ingest_complete", chunks_ingested=new_count)
-                if new_count > 0:
-                    logger.info("rebuilding_components_after_ingest", chunk_count=new_count)
-                    from src.factory import get_rag_components
-                    new_orchestrator, new_pipeline = get_rag_components()
-                    app.state.orchestrator = new_orchestrator
-                    app.state.pipeline = new_pipeline
-                    logger.info("components_rebuilt", reason="auto_ingest_populated_db")
+            logger.info("ingesting_corpus_in_process")
+            ingest_errors = []
+            for pdf_path_str, page_limit in _AUTO_INGEST_PDFS:
+                pdf_path = Path(pdf_path_str)
+                if not pdf_path.exists():
+                    logger.warning("pdf_not_found_skipping", path=pdf_path_str)
+                    continue
+                try:
+                    result_meta = pipeline.ingest(pdf_path_str, page_limit=page_limit)
+                    logger.info(
+                        "pdf_ingested",
+                        filename=pdf_path.name,
+                        chunk_count=result_meta["chunk_count"],
+                        page_limit=page_limit,
+                    )
+                except Exception as exc:
+                    logger.error("pdf_ingest_failed", filename=pdf_path.name, error=str(exc))
+                    ingest_errors.append(pdf_path.name)
+
+            new_count = collection.count()
+            logger.info("auto_ingest_complete", chunks_ingested=new_count, errors=ingest_errors)
+            if new_count > 0:
+                logger.info("rebuilding_components_after_ingest", chunk_count=new_count)
+                from src.factory import get_rag_components
+                new_orchestrator, new_pipeline = get_rag_components()
+                app.state.orchestrator = new_orchestrator
+                app.state.pipeline = new_pipeline
+                logger.info("components_rebuilt", reason="auto_ingest_populated_db")
         elif chunk_count > 0:
             logger.info("auto_ingest_skipped", reason="db_already_populated", chunk_count=chunk_count)
         else:

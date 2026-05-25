@@ -51,7 +51,12 @@ class IngestionPipeline:
         self._vector_store = vector_store
         self._chunker_router = chunker_router
 
-    def ingest(self, file_path: str, filename: str | None = None) -> dict[str, object]:
+    def ingest(
+        self,
+        file_path: str,
+        filename: str | None = None,
+        page_limit: int | None = None,
+    ) -> dict[str, object]:
         """Ingest a PDF file end-to-end.
 
         Generates a unique document_id, parses the PDF, chunks the text,
@@ -61,6 +66,7 @@ class IngestionPipeline:
             file_path: Path to the PDF file on disk.
             filename: Human-readable filename to embed in metadata. If None,
                 the basename of file_path is used.
+            page_limit: Maximum number of pages to parse. None means all pages.
 
         Returns:
             dict with keys: document_id (str), filename (str), chunk_count (int).
@@ -75,7 +81,7 @@ class IngestionPipeline:
 
         # ── 1. Parse ──────────────────────────────────────────────────────────
         t0 = time.perf_counter()
-        parsed_doc = self._parser.parse(file_path)
+        parsed_doc = self._parser.parse(file_path, page_limit=page_limit)
         # Override metadata filename with the user-facing name
         parsed_doc.metadata["filename"] = display_name
         log.info("Parse complete", elapsed_ms=round((time.perf_counter() - t0) * 1000))
