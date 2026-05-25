@@ -1,15 +1,15 @@
 """Document type classification.
 
 Two-stage classification:
-  1. Rule-based: file extension + first 500 chars (free, instant)
-  2. LLM fallback: gpt-4o-mini on first 2000 chars (~₹0.10) for ambiguous docs
+  1. Rule-based: structural heuristics on first 2000 chars (free, instant)
+  2. LLM fallback: gpt-4o-mini on first 2000 chars for ambiguous docs
 
-Document types supported initially:
-  "legal":   laws, constitutions, statutes, contracts
-  "default": everything else (uses RecursiveChunker fallback)
-
-Future doc types (placeholder for later sessions):
-  "prose", "academic", "technical"
+Document types:
+  "legal":    laws, constitutions, statutes, contracts
+  "academic": research papers, reports, ARC-style government documents
+  "technical":API docs, manuals, technical specifications
+  "prose":    novels, essays, articles, blog posts
+  "default":  fallback (RecursiveChunker)
 """
 
 import json
@@ -41,7 +41,7 @@ class ClassificationResult:
 
 
 class RuleBasedClassifier:
-    """First-pass classifier using file extension + structural heuristics."""
+    """First-pass classifier using structural heuristics on the first 2000 chars."""
 
     LEGAL_PATTERNS = [
         r"\bArticle\s+\d{1,3}",
@@ -55,34 +55,95 @@ class RuleBasedClassifier:
         r"\bsub-?section\s+\(\d+\)",
     ]
 
+    ACADEMIC_PATTERNS = [
+        r"\bAbstract\b",
+        r"\bIntroduction\b",
+        r"\bMethodolog",
+        r"\bConclusion\b",
+        r"\bReferences\b",
+        r"\bKeywords?\b",
+        r"^\d+\.\d+\s+[A-Z]",
+        r"\bFigure\s+\d+\b",
+        r"\bTable\s+\d+\b",
+        r"\bet al\.\b",
+        r"\bdoi:\s*10\.",
+    ]
+
+    TECHNICAL_PATTERNS = [
+        r"^#{1,3}\s+\w",
+        r"```",
+        r"\bInstallation\b",
+        r"\bPrerequisite",
+        r"\bAPI\b",
+        r"^Step\s+\d+",
+        r"\bSyntax\b",
+        r"\bParameter",
+        r"\bReturns?\b",
+        r"\bConfiguration\b",
+        r"\bUsage\b",
+    ]
+
+    PROSE_PATTERNS = [
+        r"\bchapter\s+\d+\b",
+        r"\bonce upon\b",
+        r"[“”‘’]\w",
+        r"\bnarrat(?:or|ive|ed)\b",
+        r"\bsaid\b.{0,20}[,.]",
+        r"\bnovel\b|\bstory\b|\bessay\b",
+        r"\bprotagonist\b|\bcharacter\b",
+        r"\bparagraph\b",
+    ]
+
+    # (min_matches_for_high_confidence, confidence_value)
+    _THRESHOLDS: dict = {
+        DocumentType.LEGAL:     (3, 0.90),
+        DocumentType.ACADEMIC:  (3, 0.85),
+        DocumentType.TECHNICAL: (3, 0.85),
+        DocumentType.PROSE:     (3, 0.80),
+    }
+    # Tie-breaking priority when two types score equally
+    _PRIORITY = [DocumentType.LEGAL, DocumentType.ACADEMIC, DocumentType.TECHNICAL, DocumentType.PROSE]
+
     def classify(self, text_sample: str, file_path: Path | None = None) -> ClassificationResult:
-        """Classify document from first ~500 chars sample.
+        """Classify document from first 2000 chars using pattern matching.
 
         Returns ClassificationResult with confidence.
         High confidence (>=0.8) → trust the rule-based result.
         Low confidence (<0.8) → escalate to LLM classifier.
         """
         sample = text_sample[:2000]
+        flags = re.IGNORECASE | re.MULTILINE
 
-        legal_score = sum(
-            1 for pattern in self.LEGAL_PATTERNS
-            if re.search(pattern, sample, re.IGNORECASE)
-        )
+        scores = {
+            DocumentType.LEGAL:     sum(1 for p in self.LEGAL_PATTERNS     if re.search(p, sample, flags)),
+            DocumentType.ACADEMIC:  sum(1 for p in self.ACADEMIC_PATTERNS  if re.search(p, sample, flags)),
+            DocumentType.TECHNICAL: sum(1 for p in self.TECHNICAL_PATTERNS if re.search(p, sample, flags)),
+            DocumentType.PROSE:     sum(1 for p in self.PROSE_PATTERNS     if re.search(p, sample, flags)),
+        }
 
-        if legal_score >= 3:
+        # Collect types that meet their threshold, rank by score then priority
+        qualified = [
+            (dt, scores[dt], conf)
+            for dt, (threshold, conf) in self._THRESHOLDS.items()
+            if scores[dt] >= threshold
+        ]
+        if qualified:
+            qualified.sort(key=lambda x: (-x[1], self._PRIORITY.index(x[0])))
+            best_type, best_score, best_conf = qualified[0]
             return ClassificationResult(
-                doc_type=DocumentType.LEGAL,
-                confidence=0.9,
+                doc_type=best_type,
+                confidence=best_conf,
                 method="rules",
-                reason=f"Matched {legal_score} legal patterns",
+                reason=f"Matched {best_score} {best_type.value} patterns",
             )
 
-        if legal_score >= 1:
+        # Weak legal signal (1–2 matches) — still worth escalating to LLM
+        if scores[DocumentType.LEGAL] >= 1:
             return ClassificationResult(
                 doc_type=DocumentType.LEGAL,
                 confidence=0.6,
                 method="rules",
-                reason=f"Matched {legal_score} legal patterns (uncertain)",
+                reason=f"Matched {scores[DocumentType.LEGAL]} legal patterns (uncertain)",
             )
 
         return ClassificationResult(

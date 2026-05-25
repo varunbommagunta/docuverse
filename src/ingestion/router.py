@@ -4,9 +4,12 @@ import uuid
 
 import structlog
 
+from src.ingestion.academic_chunker import AcademicChunker
 from src.ingestion.chunkers import RecursiveChunker
 from src.ingestion.classifier import DocumentClassifier, DocumentType, ClassificationResult
 from src.ingestion.legal_chunker import LegalChunker
+from src.ingestion.prose_chunker import ProseChunker
+from src.ingestion.technical_chunker import TechnicalChunker
 from src.utils.models import Chunk, ParsedDocument
 
 logger = structlog.get_logger(__name__)
@@ -44,8 +47,11 @@ class ChunkerRouter:
     def __init__(self, classifier: DocumentClassifier) -> None:
         self._classifier = classifier
         self._chunkers: dict[DocumentType, object] = {
-            DocumentType.LEGAL: LegalChunker(),
-            DocumentType.DEFAULT: DefaultChunker(),
+            DocumentType.LEGAL:     LegalChunker(),
+            DocumentType.PROSE:     ProseChunker(),
+            DocumentType.ACADEMIC:  AcademicChunker(),
+            DocumentType.TECHNICAL: TechnicalChunker(),
+            DocumentType.DEFAULT:   DefaultChunker(),
         }
 
     def route_and_chunk(
