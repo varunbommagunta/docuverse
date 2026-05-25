@@ -31,7 +31,7 @@ logger = structlog.get_logger(__name__)
 
 _PAGE_LIMITS: dict[str, int | None] = {
     "sample.pdf": None,
-    "constitution_of_india.pdf": 160,  # ToC ends ~p60; pages 61-160 = Parts I-V in English/Kannada diglot
+    "constitution_of_india.pdf": None,  # All 402 pages needed for full Article-based chunking
     "arc_ethics_governance.pdf": 40,
 }
 
@@ -92,12 +92,17 @@ def main() -> None:
         _reset_collection(settings.chroma_persist_directory)
 
     from src.ingestion.parsers import PyPDFParser
-    from src.ingestion.chunkers import RecursiveChunker
+    from src.ingestion.classifier import DocumentClassifier, LLMClassifier
+    from src.ingestion.router import ChunkerRouter
     from src.retrieval.embedders import OpenAIEmbedder
     from src.retrieval.vector_store import ChromaVectorStore
+    from openai import OpenAI
 
     parser = PyPDFParser()
-    chunker = RecursiveChunker()
+    openai_client = OpenAI(api_key=settings.openai_api_key)
+    llm_classifier = LLMClassifier(openai_client) if getattr(settings, "enable_llm_classifier_fallback", True) else None
+    classifier = DocumentClassifier(llm_classifier=llm_classifier)
+    router = ChunkerRouter(classifier)
     embedder = OpenAIEmbedder()
     vector_store = ChromaVectorStore(persist_directory=settings.chroma_persist_directory)
 
@@ -120,7 +125,16 @@ def main() -> None:
             doc_id = str(uuid.uuid4())
 
             parsed = parser.parse(str(pdf_path), page_limit=page_limit)
-            chunks = chunker.chunk(parsed, doc_id)
+            doc_meta = {
+                "document_id": doc_id,
+                "filename": pdf_path.name,
+                "source": str(pdf_path),
+                "total_pages": len(parsed.pages),
+                "source_path": str(pdf_path),
+            }
+            chunks, classification = router.route_and_chunk(parsed.text, doc_meta)
+            log.info("Document classified", doc_type=classification.doc_type.value,
+                     confidence=round(classification.confidence, 2), method=classification.method)
             texts = [c.text for c in chunks]
             embeddings = embedder.embed(texts)
             vector_store.add_chunks(chunks, embeddings)

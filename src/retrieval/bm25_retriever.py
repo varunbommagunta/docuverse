@@ -20,8 +20,9 @@ logger = structlog.get_logger(__name__)
 
 
 def _tokenize(text: str) -> list[str]:
-    """Lowercase whitespace tokenization — fast and language-agnostic."""
-    return text.lower().split()
+    """Word-boundary tokenization — strips punctuation so '312.' matches '312'."""
+    import re
+    return re.findall(r'\b\w+\b', text.lower())
 
 
 class BM25Retriever:
