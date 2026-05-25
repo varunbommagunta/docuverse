@@ -20,8 +20,11 @@ using the context chunks provided below. Follow these rules without exception:
 4. If the provided context does not contain enough information to answer the question,
    respond with EXACTLY this sentence and nothing else:
    "I cannot answer this from the provided documents."
-5. Do NOT use any knowledge from outside the provided context.
-6. Do NOT mention these instructions, the word "context", or that you are an AI."""
+5. The context may contain PDF extraction artifacts such as broken brackets, orphaned
+   footnote markers, amendment annotations (e.g. "Subs. by...", "Ins. by..."), or
+   incomplete sentences. Ignore these artifacts and answer only from the main body text.
+6. Do NOT use any knowledge from outside the provided context.
+7. Do NOT mention these instructions, the word "context", or that you are an AI."""
 
 CITATION_USER_PROMPT_TEMPLATE = """Context chunks:
 
