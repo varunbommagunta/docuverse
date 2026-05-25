@@ -15,7 +15,7 @@ pinned: false
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-HF_Spaces-brightgreen)](https://varunbommagunta-docuverse.hf.space) [![Tests](https://img.shields.io/badge/Tests-95_passing-success)](tests/) [![Python](https://img.shields.io/badge/Python-3.12-blue)](https://python.org)
 
-A complete, end-to-end RAG system over 1372 chunks of real Indian government text (Constitution of India, ARC Ethics Report), with quality measured by RAGAS across five development phases and deployed as a production Docker container on Hugging Face Spaces. The engineering log documents every measurable change and honest trade-off.
+A complete, end-to-end RAG system over 924 chunks of real Indian government text (Constitution of India, ARC Ethics Report), with quality measured by RAGAS across five development phases and deployed as a production Docker container on Hugging Face Spaces. The engineering log documents every measurable change and honest trade-off.
 
 **[Try it live — https://varunbommagunta-docuverse.hf.space](https://varunbommagunta-docuverse.hf.space)**
 Sample question: *"What does Article 21 of the Indian Constitution protect?"*
@@ -50,7 +50,7 @@ flowchart TD
     Orchestrator["Orchestrator\n(src/orchestrator.py)"]
     Retriever["RerankedHybridRetriever\nBM25 + Dense + RRF + Reranker\n(src/retrieval/)"]
     Generator["Generator · gpt-4o-mini\n(src/generation/openai_generator.py)"]
-    ChromaDB["ChromaDB\n1372 chunks\n(data/chroma_db/)"]
+    ChromaDB["ChromaDB\n924 chunks\n(data/chroma_db/)"]
     OpenAI["OpenAI API\ntext-embedding-3-small · gpt-4o-mini"]
 
     Browser --> Ingress
@@ -91,7 +91,7 @@ A modular monolith with Protocol-based components running in a single Docker con
 - **Phase 0** — Project scaffold: Ports-and-Adapters layout, Protocol interfaces, health endpoint, Streamlit shell, Docker Compose
 - **Phase 1** — Core RAG pipeline: PDF parsing, recursive chunking, OpenAI embeddings, ChromaDB vector store, cited answer generation
 - **Phase 2** — Scientific evaluation: RAGAS harness, 20-question dataset, baseline scorecard on toy corpus
-- **Phase 3a** — Corpus expansion: real Indian government PDFs (Constitution, ARC Ethics), 1372 chunks, honest realistic baseline
+- **Phase 3a** — Corpus expansion: real Indian government PDFs (Constitution, ARC Ethics), 924 chunks, honest realistic baseline
 - **Phase 4** — Hybrid retrieval + cross-encoder reranking: BM25 + dense RRF fusion, ms-marco reranker, +5.6 pp faithfulness
 - **Phase 5** — Production hardening: rate limiting, daily cost cap, single-container HF Spaces deployment with nginx routing
 
