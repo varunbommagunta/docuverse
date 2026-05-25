@@ -26,20 +26,12 @@ export default function InternalsPanel({ queryDebug, lastIngestion }: Props) {
 }
 
 function QueryPipelineCard({ debug }: { debug: QueryDebug | null }) {
-  const af = debug?.article_filter;
   const steps: Array<{ label: string; value: string; done: boolean }> = debug
     ? [
         { label: "Original query",     value: debug.original_query,    done: true },
         {
           label: "Rewritten query",
           value: debug.rewritten_query === debug.original_query ? "(unchanged)" : debug.rewritten_query,
-          done: true,
-        },
-        {
-          label: "Article filter",
-          value: af?.matched
-            ? `article_id = ${af.article_id} → ${af.pinned_count} chunk${af.pinned_count !== 1 ? "s" : ""} pinned`
-            : "no match",
           done: true,
         },
         { label: "Retrieval strategy", value: debug.retrieval_strategy, done: true },
