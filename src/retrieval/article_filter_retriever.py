@@ -48,6 +48,7 @@ class ArticleFilterRetriever:
             was found, its chunk(s) appear first; semantic results fill the rest
             up to top_k, with duplicates removed.
         """
+        print(f"[ArticleFilterRetriever] received query: {query}")
         match = _ARTICLE_RE.search(query)
 
         if not match:

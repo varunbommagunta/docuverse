@@ -85,19 +85,30 @@ class OpenAIGenerator:
 
     @staticmethod
     def _clean_text(text: str) -> str:
-        """Remove constitutional amendment markers (1[...], 2[...]) from chunk text.
+        """Remove constitutional amendment markers and footnote artifacts from chunk text.
 
-        The raw corpus text contains markers like `1[text]`, `2[text]`, and transition
-        sequences like `]3[` from the original PDF annotation of constitutional amendments.
-        These confuse the LLM when it needs to enumerate clauses or sub-provisions.
+        Mirrors LegalChunker._clean_text so that chunks ingested before the fix
+        (or from non-legal chunkers) are also cleaned at query time.
         """
-        # Remove transition markers: ]N[ → space
+        # Transition markers ]N[ → space
         text = re.sub(r"\]\d+\[", " ", text)
-        # Remove opening amendment markers: N[ → nothing (keep content that follows)
+        # Opening amendment markers N[ → nothing (keep inserted content)
         text = re.sub(r"\d+\[", "", text)
-        # Remove remaining closing brackets left by stripped markers
+        # Remaining closing brackets
         text = re.sub(r"\]", "", text)
-        # Collapse any multi-space created by removals
+        # Orphaned opening brackets (no matching ] remains)
+        text = re.sub(r"\[", "", text)
+        # Footnote separator lines
+        text = re.sub(r"_{10,}", "", text)
+        # Footnote label lines: digit + period + amendment keyword
+        text = re.sub(
+            r"^\d+\.\s+(?:Subs|Ins|Rep|Omitted)\..*$",
+            "",
+            text,
+            flags=re.MULTILINE | re.IGNORECASE,
+        )
+        # Collapse blank lines and spaces created by removals
+        text = re.sub(r"\n{3,}", "\n\n", text)
         text = re.sub(r"  +", " ", text)
         return text.strip()
 

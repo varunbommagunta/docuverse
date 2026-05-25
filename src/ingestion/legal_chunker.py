@@ -137,10 +137,69 @@ class LegalChunker:
         logger.info("legal_chunker_produced_chunks", count=len(chunks))
         return chunks
 
+    @staticmethod
+    def _preprocess_legal_text(text: str) -> str:
+        """Strip PDF extraction artifacts specific to Indian legal documents.
+
+        Four pattern classes found in pypdf output of the Indian Constitution:
+
+        1. Page headers inserted by pypdf at the top of each page.
+        2. Horizontal rule separators and inline footnote content on the same line.
+           NOTE: the originally specified pattern used DOTALL with a \\n\\d+\\. lookahead,
+           but this PDF has articles running together without newlines so DOTALL
+           consumed entire article blocks. _{20,} (not _{4,}) avoids the 10–12 char
+           TOC decorative underlines; no DOTALL keeps matching within a single line.
+        3. Inline footnote reference digits before [ (e.g. 1[(4) Nothing...])
+           — strip only the leading digit, keep the bracket content.
+        4. Orphaned page numbers — standalone digit lines between article text.
+        """
+        # 1. Page headers
+        text = re.sub(r'^\d+\s+THE CONSTITUTION OF INDIA\s*\n', '', text, flags=re.MULTILINE)
+        text = re.sub(r'^\(Part [A-Z]+\.—[^\)]+\)\s*\n', '', text, flags=re.MULTILINE)
+        # 2. Horizontal rule + same-line footnote content
+        text = re.sub(r'_{20,}[^\n]*', '', text)
+        # 3. Inline footnote reference digits before [ — strip digit, keep bracket content
+        text = re.sub(r'(?<!\d)\d\[', '[', text)
+        # 4. Orphaned page numbers — standalone digit lines
+        text = re.sub(r'^\d+\s*$', '', text, flags=re.MULTILINE)
+        return text
+
+    @staticmethod
+    def _clean_text(text: str) -> str:
+        """Strip constitutional amendment markers and footnote artifacts.
+
+        The raw PDF text encodes constitutional amendments with superscript
+        notation: N[inserted text] for insertions and ]N[ for transitions
+        between amendments. Footnote blocks appear below a line of underscores
+        and start with 'N. Subs./Ins./Rep./Omitted'.
+        """
+        # Transition markers ]N[ → single space
+        text = re.sub(r"\]\d+\[", " ", text)
+        # Opening amendment markers N[ → nothing (keep the inserted content)
+        text = re.sub(r"\d+\[", "", text)
+        # Closing brackets left by stripped opening markers
+        text = re.sub(r"\]", "", text)
+        # Orphaned opening brackets (no matching ] remains after step above)
+        text = re.sub(r"\[", "", text)
+        # Footnote separator lines (10+ underscores)
+        text = re.sub(r"_{10,}", "", text)
+        # Footnote label lines: digit + period + amendment keyword
+        text = re.sub(
+            r"^\d+\.\s+(?:Subs|Ins|Rep|Omitted)\..*$",
+            "",
+            text,
+            flags=re.MULTILINE | re.IGNORECASE,
+        )
+        # Collapse runs of blank lines and spaces created by the removals
+        text = re.sub(r"\n{3,}", "\n\n", text)
+        text = re.sub(r"  +", " ", text)
+        return text.strip()
+
     def _preprocess(self, text: str) -> str:
-        """Strip running page headers. Footnotes are left in place — they contain
-        no em-dashes so the article pattern won't match them as article headers."""
-        return self.PAGE_HEADER.sub("", text)
+        """Strip PDF extraction artifacts, then amendment markers."""
+        text = self._preprocess_legal_text(text)
+        text = self.PAGE_HEADER.sub("", text)
+        return self._clean_text(text)
 
     def _sub_chunk_long_article(self, article_text: str, article: _ArticleMatch) -> list[str]:
         """For very long Articles, sub-chunk at numeric clause boundaries (1)(2)(3)."""
