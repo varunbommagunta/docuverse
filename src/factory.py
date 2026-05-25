@@ -13,12 +13,15 @@ Retrieval strategies (set RETRIEVAL_STRATEGY env var):
 """
 
 import structlog
+from openai import OpenAI
 
 from config.settings import get_settings
 from src.generation.openai_generator import OpenAIGenerator
 from src.ingestion.chunkers import RecursiveChunker
+from src.ingestion.classifier import DocumentClassifier, LLMClassifier
 from src.ingestion.parsers import PyPDFParser
 from src.ingestion.pipeline import IngestionPipeline
+from src.ingestion.router import ChunkerRouter
 from src.orchestrator import RAGOrchestrator
 from src.retrieval.dense_retriever import DenseRetriever
 from src.retrieval.query_rewriter import OpenAIQueryRewriter
@@ -102,11 +105,23 @@ def get_rag_components() -> tuple[RAGOrchestrator, IngestionPipeline]:
         chunk_size=settings.chunk_size,
         chunk_overlap=settings.chunk_overlap,
     )
+
+    # Build the classifier + router
+    openai_client = OpenAI(api_key=settings.openai_api_key)
+    llm_classifier = (
+        LLMClassifier(openai_client)
+        if getattr(settings, "enable_llm_classifier_fallback", True)
+        else None
+    )
+    classifier = DocumentClassifier(llm_classifier=llm_classifier)
+    chunker_router = ChunkerRouter(classifier=classifier)
+
     pipeline = IngestionPipeline(
         parser=parser,
         chunker=chunker,
         embedder=embedder,
         vector_store=vector_store,
+        chunker_router=chunker_router,
     )
 
     # ── Query pipeline ────────────────────────────────────────────────────────

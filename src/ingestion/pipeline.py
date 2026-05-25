@@ -9,6 +9,7 @@ the Protocol contracts (e.g., PyPDFParser.parse returns ParsedDocument).
 import os
 import time
 import uuid
+from typing import TYPE_CHECKING
 
 import structlog
 
@@ -16,6 +17,9 @@ from src.ingestion.chunkers import RecursiveChunker
 from src.ingestion.parsers import PyPDFParser
 from src.retrieval.embedders import OpenAIEmbedder
 from src.retrieval.vector_store import ChromaVectorStore
+
+if TYPE_CHECKING:
+    from src.ingestion.router import ChunkerRouter
 
 logger = structlog.get_logger(__name__)
 
@@ -25,7 +29,7 @@ class IngestionPipeline:
 
     Coordinates:
       1. Parse: PDF → ParsedDocument
-      2. Chunk: ParsedDocument → list[Chunk]
+      2. Chunk: ParsedDocument → list[Chunk]  (via ChunkerRouter if provided)
       3. Embed: list[Chunk] → list[list[float]]
       4. Store: Chunks + embeddings → VectorStore
 
@@ -39,11 +43,13 @@ class IngestionPipeline:
         chunker: RecursiveChunker,
         embedder: OpenAIEmbedder,
         vector_store: ChromaVectorStore,
+        chunker_router: "ChunkerRouter | None" = None,
     ) -> None:
         self._parser = parser
         self._chunker = chunker
         self._embedder = embedder
         self._vector_store = vector_store
+        self._chunker_router = chunker_router
 
     def ingest(self, file_path: str, filename: str | None = None) -> dict[str, object]:
         """Ingest a PDF file end-to-end.
@@ -76,8 +82,24 @@ class IngestionPipeline:
 
         # ── 2. Chunk ──────────────────────────────────────────────────────────
         t1 = time.perf_counter()
-        chunks = self._chunker.chunk(parsed_doc, doc_id)
-        log.info("Chunk complete", chunk_count=len(chunks), elapsed_ms=round((time.perf_counter() - t1) * 1000))
+        if self._chunker_router is not None:
+            doc_meta = {
+                "document_id": doc_id,
+                "filename": display_name,
+                "source": file_path,
+                **{k: v for k, v in parsed_doc.metadata.items()
+                   if k not in ("document_id", "filename", "source")},
+            }
+            chunks, classification = self._chunker_router.route_and_chunk(parsed_doc.text, doc_meta)
+            log.info(
+                "Chunk complete",
+                chunk_count=len(chunks),
+                doc_type=classification.doc_type.value,
+                elapsed_ms=round((time.perf_counter() - t1) * 1000),
+            )
+        else:
+            chunks = self._chunker.chunk(parsed_doc, doc_id)
+            log.info("Chunk complete", chunk_count=len(chunks), elapsed_ms=round((time.perf_counter() - t1) * 1000))
 
         # ── 3. Embed ──────────────────────────────────────────────────────────
         t2 = time.perf_counter()

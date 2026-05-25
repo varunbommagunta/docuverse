@@ -104,6 +104,19 @@ class Settings(BaseSettings):
         le=10,
     )
 
+    # ── Document classification ───────────────────────────────────────────────
+    enable_llm_classifier_fallback: bool = Field(
+        default=True,
+        description="If True, use gpt-4o-mini for documents the rule-based classifier can't "
+        "confidently identify. If False, all uncertain docs go to DefaultChunker.",
+    )
+    classifier_confidence_threshold: float = Field(
+        default=0.8,
+        ge=0.0,
+        le=1.0,
+        description="Rule-based confidence below this triggers LLM classifier fallback.",
+    )
+
     # ── HuggingFace Spaces deployment ─────────────────────────────────────────
     hf_spaces_mode: bool = Field(
         default=False,
