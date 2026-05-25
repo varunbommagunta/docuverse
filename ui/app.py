@@ -147,15 +147,14 @@ if prompt := st.chat_input("Ask a question about your documents…"):
 
         with st.chat_message("assistant"), st.spinner("Thinking…"):
             try:
-                # Build history from session_state.messages (last 3 turns = 6 messages max)
-                history_to_send = []
-                if "messages" in st.session_state and len(st.session_state.messages) > 0:
-                    # Send last 6 messages (3 turns: 3 user + 3 assistant)
-                    recent_messages = st.session_state.messages[-6:]
-                    history_to_send = [
-                        {"role": m["role"], "content": m["content"]}
-                        for m in recent_messages
-                    ]
+                # Build history from previous messages only (exclude current user message,
+                # which was just appended above — sending it in history too duplicates
+                # the query and breaks the query rewriter's coreference resolution).
+                prior_messages = st.session_state.messages[:-1]  # all but current
+                history_to_send = [
+                    {"role": m["role"], "content": m["content"]}
+                    for m in prior_messages[-6:]  # last 3 turns
+                ] if prior_messages else []
 
                 response = requests.post(
                     f"{API_URL}/query",
