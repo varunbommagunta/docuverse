@@ -1,13 +1,4 @@
----
-sdk: docker
-app_port: 7860
-title: DocuVerse
-emoji: 📚
-colorFrom: blue
-colorTo: indigo
-short_description: Production-grade RAG — PDF Q&A with cited answers
-pinned: false
----
+
 
 # DocuVerse
 
