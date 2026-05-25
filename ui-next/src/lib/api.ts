@@ -1,6 +1,6 @@
 import type { Document, QueryDebug } from "./types";
 
-const BASE = "/api";
+const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000");
 
 export interface QueryResponse {
   answer: string;
