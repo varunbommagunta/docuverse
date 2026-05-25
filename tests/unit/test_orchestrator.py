@@ -121,9 +121,9 @@ def test_orchestrator_calls_rewriter_when_history_provided():
     mock_rewriter.rewrite.assert_called_once_with("follow up", history)
     # Retrieval should use rewritten query
     mock_retriever.retrieve.assert_called_once_with("rewritten query", top_k=5)
-    # Generation uses ORIGINAL query
+    # Generation uses rewritten query so pronouns are resolved for the generator
     mock_generator.generate.assert_called_once()
-    assert mock_generator.generate.call_args.args[0] == "follow up"
+    assert mock_generator.generate.call_args.args[0] == "rewritten query"
 
 
 def test_orchestrator_skips_rewriter_when_no_history():

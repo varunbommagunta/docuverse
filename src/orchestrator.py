@@ -71,7 +71,7 @@ class RAGOrchestrator:
 
         # ── Step 2: Generate ──────────────────────────────────────────────────
         try:
-            result = self._generator.generate(query, chunks)
+            result = self._generator.generate(retrieval_query, chunks)
         except GenerationError:
             raise
         except Exception as exc:
