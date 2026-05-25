@@ -135,7 +135,7 @@ app.add_middleware(SlowAPIMiddleware)
 
 _ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "https://docuverse-o6kd.vercel.app",
+    "https://docuverse-eta.vercel.app",
 ]
 app.add_middleware(
     CORSMiddleware,
