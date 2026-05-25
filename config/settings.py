@@ -80,7 +80,7 @@ class Settings(BaseSettings):
 
     # ── Upload limits ─────────────────────────────────────────────────────────
     max_upload_size_mb: int = Field(
-        default=6,
+        default=50,
         description="Maximum PDF upload size in megabytes.",
         gt=0,
     )
