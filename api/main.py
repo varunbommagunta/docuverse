@@ -135,13 +135,12 @@ app.add_middleware(SlowAPIMiddleware)
 
 _ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "https://docuverse-ui.vercel.app",  # update once Vercel gives the actual URL
-    "*",  # remove after confirming frontend works
+    "https://docuverse-o6kd.vercel.app",
 ]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ALLOWED_ORIGINS,
-    allow_credentials=False,  # must be False while "*" is in allow_origins
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
