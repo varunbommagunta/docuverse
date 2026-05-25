@@ -12,6 +12,7 @@ from pathlib import Path
 
 import structlog
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -125,8 +126,22 @@ app.include_router(ingest.router)
 app.include_router(query.router)
 app.include_router(corpus.router)
 
-# Middleware applied in LIFO order: SlowAPI (outermost) → CostCap → routes
+# Middleware applied in LIFO order (last added = outermost):
+#   CORS (outermost — handles preflight before rate limiting) → SlowAPI → CostCap → routes
 from config.settings import get_settings as _get_settings
 _daily_cap = _get_settings().daily_cost_cap_inr
 app.add_middleware(DailyCostCapMiddleware, daily_cap_inr=_daily_cap)
 app.add_middleware(SlowAPIMiddleware)
+
+_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "https://docuverse-ui.vercel.app",  # update once Vercel gives the actual URL
+    "*",  # remove after confirming frontend works
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_ALLOWED_ORIGINS,
+    allow_credentials=False,  # must be False while "*" is in allow_origins
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
