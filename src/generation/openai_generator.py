@@ -84,11 +84,30 @@ class OpenAIGenerator:
     # ── Private helpers ───────────────────────────────────────────────────────
 
     @staticmethod
+    def _clean_text(text: str) -> str:
+        """Remove constitutional amendment markers (1[...], 2[...]) from chunk text.
+
+        The raw corpus text contains markers like `1[text]`, `2[text]`, and transition
+        sequences like `]3[` from the original PDF annotation of constitutional amendments.
+        These confuse the LLM when it needs to enumerate clauses or sub-provisions.
+        """
+        # Remove transition markers: ]N[ → space
+        text = re.sub(r"\]\d+\[", " ", text)
+        # Remove opening amendment markers: N[ → nothing (keep content that follows)
+        text = re.sub(r"\d+\[", "", text)
+        # Remove remaining closing brackets left by stripped markers
+        text = re.sub(r"\]", "", text)
+        # Collapse any multi-space created by removals
+        text = re.sub(r"  +", " ", text)
+        return text.strip()
+
+    @staticmethod
     def _format_context(chunks: list[RetrievedChunk]) -> str:
         """Render chunks as a numbered context block for the prompt."""
         parts = []
         for idx, rc in enumerate(chunks):
-            parts.append(f"[chunk_{idx}]:\n{rc.chunk.text.strip()}")
+            cleaned = OpenAIGenerator._clean_text(rc.chunk.text)
+            parts.append(f"[chunk_{idx}]:\n{cleaned}")
         return "\n\n".join(parts)
 
     @staticmethod
