@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     # ── Retrieval ─────────────────────────────────────────────────────────────
     top_k: int = Field(default=5, description="Number of chunks returned by retriever.", gt=0)
     retrieval_strategy: str = Field(
-        default="dense",
+        default="reranked_hybrid",
         description="Retrieval strategy: dense | sparse | hybrid | reranked_hybrid",
     )
     hybrid_dense_top_k: int = Field(default=20, description="Candidate count from dense in hybrid.", gt=0)
