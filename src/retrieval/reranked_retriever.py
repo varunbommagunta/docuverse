@@ -35,6 +35,7 @@ class RerankedRetriever:
         self._base = base
         self._reranker = reranker
         self._fetch_k = fetch_k
+        self.last_debug: dict = {}
 
     def retrieve(self, query: str, top_k: int = 5) -> list[RetrievedChunk]:
         """Fetch fetch_k candidates then rerank to top_k.
@@ -53,5 +54,6 @@ class RerankedRetriever:
         log.info("Candidates fetched", candidate_count=len(candidates))
 
         results = self._reranker.rerank(query, candidates, top_k=top_k)
+        self.last_debug = {"candidates_in": len(candidates), "results_out": len(results)}
         log.info("RerankedRetriever complete", results_count=len(results))
         return results

@@ -145,7 +145,12 @@ def get_rag_components() -> tuple[RAGOrchestrator, IngestionPipeline]:
     else:
         query_rewriter = None
 
-    orchestrator = RAGOrchestrator(retriever=retriever, generator=generator, query_rewriter=query_rewriter)
+    orchestrator = RAGOrchestrator(
+        retriever=retriever,
+        generator=generator,
+        query_rewriter=query_rewriter,
+        retrieval_strategy=strategy,
+    )
 
     logger.info("RAG components ready", retrieval_strategy=strategy)
     return orchestrator, pipeline

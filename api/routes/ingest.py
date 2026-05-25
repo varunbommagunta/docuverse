@@ -1,14 +1,10 @@
-"""POST /ingest — upload and ingest a PDF document.
-
-Accepts a multipart/form-data upload, validates the file, saves it to a
-temporary location, delegates to IngestionPipeline.ingest(), then cleans up.
-"""
+"""POST /ingest — upload and ingest a PDF document."""
 
 import os
 import tempfile
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile
 
 from api.dependencies import get_pipeline
 from api.schemas import IngestResponse
@@ -24,24 +20,18 @@ _MB = 1024 * 1024
 @router.post("/ingest", response_model=IngestResponse, tags=["rag"])
 async def ingest_document(
     file: UploadFile,
+    session_id: str | None = Form(default=None),
     pipeline: IngestionPipeline = Depends(get_pipeline),
 ) -> IngestResponse:
-    """Upload a PDF and ingest it into the vector store.
-
-    - Validates file extension (.pdf only) and size (≤ MAX_UPLOAD_SIZE_MB).
-    - Delegates parsing, chunking, embedding, and storing to IngestionPipeline.
-    - The temporary file is always deleted after processing.
-    """
+    """Upload a PDF and ingest it into the vector store."""
     from config.settings import get_settings
     settings = get_settings()
     max_bytes = settings.max_upload_size_mb * _MB
 
-    # Validate extension
     filename = file.filename or "upload.pdf"
     if not filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are accepted.")
 
-    # Read and validate size
     contents = await file.read()
     if len(contents) > max_bytes:
         raise HTTPException(
@@ -49,9 +39,8 @@ async def ingest_document(
             detail=f"File exceeds the {settings.max_upload_size_mb} MB limit.",
         )
 
-    logger.info("Ingest request received", filename=filename, size_bytes=len(contents))
+    logger.info("Ingest request received", filename=filename, size_bytes=len(contents), session_id=session_id)
 
-    # Save to temp file and ingest
     tmp_path: str | None = None
     try:
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
@@ -75,4 +64,8 @@ async def ingest_document(
         document_id=str(result["document_id"]),
         filename=str(result["filename"]),
         chunk_count=int(result["chunk_count"]),
+        document_type=str(result.get("document_type", "default")),
+        classification_confidence=float(result.get("classification_confidence", 1.0)),
+        classification_method=str(result.get("classification_method", "none")),
+        chunker_used=str(result.get("chunker_used", "default")),
     )

@@ -88,6 +88,7 @@ class IngestionPipeline:
 
         # ── 2. Chunk ──────────────────────────────────────────────────────────
         t1 = time.perf_counter()
+        classification = None
         if self._chunker_router is not None:
             doc_meta = {
                 "document_id": doc_id,
@@ -121,8 +122,13 @@ class IngestionPipeline:
         total_ms = round((time.perf_counter() - t0) * 1000)
         log.info("Ingestion pipeline complete", total_elapsed_ms=total_ms)
 
+        chunker_name = (chunks[0].metadata.get("chunker", "default") if chunks else "default")
         return {
             "document_id": doc_id,
             "filename": display_name,
             "chunk_count": len(chunks),
+            "document_type": classification.doc_type.value if classification else "default",
+            "classification_confidence": classification.confidence if classification else 1.0,
+            "classification_method": classification.method if classification else "none",
+            "chunker_used": chunker_name,
         }

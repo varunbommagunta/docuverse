@@ -35,6 +35,7 @@ class ArticleFilterRetriever:
         """
         self._base = base
         self._vector_store = vector_store
+        self.last_debug: dict = {"matched": False, "article_id": None, "pinned_count": 0, "pinned_ids": set()}
 
     def retrieve(self, query: str, top_k: int = 5) -> list[RetrievedChunk]:
         """Retrieve chunks, optionally pinning exact article match at rank 0.
@@ -48,10 +49,10 @@ class ArticleFilterRetriever:
             was found, its chunk(s) appear first; semantic results fill the rest
             up to top_k, with duplicates removed.
         """
-        print(f"[ArticleFilterRetriever] received query: {query}")
         match = _ARTICLE_RE.search(query)
 
         if not match:
+            self.last_debug = {"matched": False, "article_id": None, "pinned_count": 0, "pinned_ids": set()}
             return self._base.retrieve(query, top_k=top_k)
 
         article_id = match.group(1).upper()  # normalise "21a" → "21A"
@@ -63,9 +64,11 @@ class ArticleFilterRetriever:
         if not pinned:
             # No chunks for this article in the store — fall back silently
             logger.info("article_filter_no_match", article_id=article_id)
+            self.last_debug = {"matched": True, "article_id": article_id, "pinned_count": 0, "pinned_ids": set()}
             return self._base.retrieve(query, top_k=top_k)
 
         pinned_ids: set[str] = {rc.chunk.id for rc in pinned}
+        self.last_debug = {"matched": True, "article_id": article_id, "pinned_count": len(pinned), "pinned_ids": pinned_ids}
 
         # Semantic search for remaining slots; fetch extra to cover dedup losses
         semantic_top_k = max(top_k, top_k + len(pinned))

@@ -7,12 +7,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Runtime services + build tools (purged after pip install to reduce size)
+# Runtime services + build tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
     supervisor \
     curl \
     build-essential \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements-prod.txt .
@@ -30,6 +32,13 @@ RUN apt-get purge -y --auto-remove build-essential
 RUN python3 -c "\
 from sentence_transformers.cross_encoder import CrossEncoder; \
 CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')"
+
+# Build Next.js UI — install deps first for layer caching
+COPY ui-next/package*.json ./ui-next/
+RUN cd ui-next && npm ci --prefer-offline
+
+COPY ui-next/ ./ui-next/
+RUN cd ui-next && npm run build
 
 # Process manager and reverse-proxy configuration
 # sed converts Windows CRLF → Unix LF

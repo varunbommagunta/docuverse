@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+
+# Local env files
+.env*.local
+
+# Misc
+.DS_Store
+*.pem

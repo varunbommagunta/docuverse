@@ -1,9 +1,4 @@
-"""RAGOrchestrator — coordinates retrieval and generation for a single query.
-
-Phase 1 implementation: replaces the Phase 0 stub with a real two-step
-pipeline. The orchestrator itself has no knowledge of HTTP, Streamlit, or
-any external service — those details are hidden behind the injected components.
-"""
+"""RAGOrchestrator — coordinates retrieval and generation for a single query."""
 
 import structlog
 
@@ -14,21 +9,28 @@ from src.utils.models import Answer
 
 logger = structlog.get_logger(__name__)
 
+_STRATEGY_LABELS = {
+    "dense":           "dense (cosine similarity)",
+    "sparse":          "BM25 (keyword)",
+    "hybrid":          "hybrid (BM25 + dense + RRF)",
+    "reranked_hybrid": "reranked hybrid (BM25 + dense + RRF + cross-encoder)",
+}
+
 
 class RAGOrchestrator:
     """Coordinates the RAG pipeline: retrieve relevant chunks, then generate an answer."""
 
-    def __init__(self, retriever: Retriever, generator: Generator, query_rewriter=None) -> None:
-        """Inject retriever and generator dependencies.
-
-        Args:
-            retriever: Any object satisfying the Retriever Protocol.
-            generator: Any object satisfying the Generator Protocol.
-            query_rewriter: Optional QueryRewriter for conversational follow-up handling.
-        """
+    def __init__(
+        self,
+        retriever: Retriever,
+        generator: Generator,
+        query_rewriter=None,
+        retrieval_strategy: str = "hybrid",
+    ) -> None:
         self._retriever = retriever
         self._generator = generator
         self._query_rewriter = query_rewriter
+        self._retrieval_strategy = retrieval_strategy
         logger.info(
             "RAGOrchestrator initialised",
             retriever=type(retriever).__name__,
@@ -37,29 +39,15 @@ class RAGOrchestrator:
         )
 
     def answer(self, query: str, history: list[dict] | None = None) -> Answer:
-        """Run the full RAG pipeline for a user query.
-
-        Args:
-            query: Natural-language question from the user.
-            history: Optional conversation history for query rewriting.
-
-        Returns:
-            Answer with generated text, citation indices, and source chunks.
-
-        Raises:
-            RetrievalError: If the retrieval step fails.
-            GenerationError: If the generation step fails.
-        """
+        """Run the full RAG pipeline and return an Answer with debug info."""
         log = logger.bind(query_length=len(query))
         log.info("Query received")
 
-        # Rewrite query if we have a rewriter AND history
+        retrieval_query = query
         if self._query_rewriter and history:
             retrieval_query = self._query_rewriter.rewrite(query, history)
-        else:
-            retrieval_query = query
 
-        # ── Step 1: Retrieve ──────────────────────────────────────────────────
+        # ── Retrieve ──────────────────────────────────────────────────────────
         try:
             chunks = self._retriever.retrieve(retrieval_query, top_k=5)
         except RetrievalError:
@@ -69,7 +57,7 @@ class RAGOrchestrator:
 
         log.info("Chunks retrieved", chunk_count=len(chunks))
 
-        # ── Step 2: Generate ──────────────────────────────────────────────────
+        # ── Generate ──────────────────────────────────────────────────────────
         try:
             result = self._generator.generate(retrieval_query, chunks)
         except GenerationError:
@@ -79,4 +67,42 @@ class RAGOrchestrator:
 
         log.info("Answer generated", answer_length=len(result.text), citation_count=len(result.citations))
         result.rewritten_query = retrieval_query if retrieval_query != query else None
+        result.debug = self._build_debug(query, retrieval_query, chunks)
         return result
+
+    def _build_debug(self, original_query: str, retrieval_query: str, chunks) -> dict:
+        try:
+            afr_debug = getattr(self._retriever, "last_debug", {}) or {}
+            inner = getattr(self._retriever, "_base", None)
+            rr_debug = getattr(inner, "last_debug", None)
+
+            pinned_ids: set[str] = afr_debug.get("pinned_ids", set())
+
+            return {
+                "original_query": original_query,
+                "rewritten_query": retrieval_query,
+                "article_filter": {
+                    "matched": afr_debug.get("matched", False),
+                    "article_id": afr_debug.get("article_id"),
+                    "pinned_count": afr_debug.get("pinned_count", 0),
+                },
+                "retrieval_strategy": _STRATEGY_LABELS.get(
+                    self._retrieval_strategy, self._retrieval_strategy
+                ),
+                "chunks": [
+                    {
+                        "id": f"chunk_{i}",
+                        "score": rc.score,
+                        "pinned": rc.chunk.id in pinned_ids,
+                        "source": rc.chunk.metadata.get("filename", ""),
+                        "article_id": rc.chunk.metadata.get("article_id"),
+                        "section_title": rc.chunk.metadata.get("section_title"),
+                        "preview": rc.chunk.text[:80],
+                    }
+                    for i, rc in enumerate(chunks)
+                ],
+                "reranker": rr_debug if rr_debug else None,
+            }
+        except Exception as exc:
+            logger.warning("debug_build_failed", error=str(exc))
+            return {}

@@ -75,3 +75,7 @@ class Answer(BaseModel):
         default=None,
         description="Query that actually hit the retriever. None if no rewriting occurred.",
     )
+    debug: dict | None = Field(
+        default=None,
+        description="Pipeline internals for the UI debug panel.",
+    )

@@ -1,14 +1,18 @@
-"""POST /query — ask a question and receive a cited answer.
-
-Delegates to RAGOrchestrator.answer() and maps the domain Answer object to the
-HTTP-layer QueryResponse, including fully serialised citation details.
-"""
+"""POST /query — ask a question and receive a cited answer."""
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
 
 from api.dependencies import get_orchestrator
-from api.schemas import CitationDetail, QueryRequest, QueryResponse
+from api.schemas import (
+    ArticleFilterDebug,
+    ChunkDebug,
+    CitationDetail,
+    QueryDebug,
+    QueryRequest,
+    QueryResponse,
+    RerankerDebug,
+)
 from src.orchestrator import RAGOrchestrator
 from src.retrieval.vector_store import ChromaVectorStore
 from src.utils.exceptions import GenerationError, RetrievalError
@@ -22,14 +26,9 @@ async def query_documents(
     body: QueryRequest,
     orchestrator: RAGOrchestrator = Depends(get_orchestrator),
 ) -> QueryResponse:
-    """Ask a question and receive a cited answer grounded in ingested documents.
-
-    Returns 503 if no documents have been ingested yet.
-    Returns 500 on unexpected retrieval or generation errors.
-    """
+    """Ask a question and receive a cited answer grounded in ingested documents."""
     logger.info("Query request received", query_length=len(body.query))
 
-    # Guard: need at least some documents in the index
     try:
         vector_store: ChromaVectorStore = orchestrator._retriever._vector_store  # type: ignore[attr-defined]
         if vector_store.count() == 0:
@@ -40,7 +39,7 @@ async def query_documents(
     except HTTPException:
         raise
     except Exception:
-        pass  # If we can't check, proceed and let retrieval fail naturally
+        pass
 
     history = None
     if body.history:
@@ -67,9 +66,39 @@ async def query_documents(
         for idx, rc in enumerate(answer.retrieved_chunks)
     ]
 
+    debug: QueryDebug | None = None
+    if answer.debug:
+        d = answer.debug
+        af = d.get("article_filter", {})
+        rr = d.get("reranker")
+        debug = QueryDebug(
+            original_query=d.get("original_query", body.query),
+            rewritten_query=d.get("rewritten_query", body.query),
+            article_filter=ArticleFilterDebug(
+                matched=af.get("matched", False),
+                article_id=af.get("article_id"),
+                pinned_count=af.get("pinned_count", 0),
+            ),
+            retrieval_strategy=d.get("retrieval_strategy", ""),
+            chunks=[
+                ChunkDebug(
+                    id=c.get("id", ""),
+                    score=c.get("score", 0.0),
+                    pinned=c.get("pinned", False),
+                    source=c.get("source", ""),
+                    article_id=c.get("article_id"),
+                    section_title=c.get("section_title"),
+                    preview=c.get("preview", ""),
+                )
+                for c in d.get("chunks", [])
+            ],
+            reranker=RerankerDebug(**rr) if rr else None,
+        )
+
     return QueryResponse(
         answer=answer.text,
         citations=answer.citations,
         retrieved_chunks=citation_details,
         rewritten_query=answer.rewritten_query,
+        debug=debug,
     )
