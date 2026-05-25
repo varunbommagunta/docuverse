@@ -21,19 +21,20 @@ Rules:
 3. Do not add information that isn't grounded in the history
 4. Keep the rewritten query concise — one sentence
 5. Output ONLY the rewritten query, no explanation
+6. Do NOT add proper noun qualifiers (such as "of the Indian Constitution", "of India", etc.) that are not present in the original question — only substitute pronouns and implicit references
 
 Examples:
 History:
-User: What does Article 21 of the Indian Constitution protect?
+User: What does Article 21 protect?
 Assistant: Article 21 protects the right to life and personal liberty.
 Question: tell me more about that
-Rewritten: tell me more about Article 21 of the Indian Constitution and the right to life and personal liberty
+Rewritten: tell me more about Article 21 and the right to life and personal liberty
 Question: are there exceptions?
-Rewritten: are there exceptions to Article 21 of the Indian Constitution
+Rewritten: are there exceptions to Article 21
 Question: what about Article 19?
-Rewritten: what does Article 19 of the Indian Constitution cover
-Question: who wrote the Indian Constitution?
-Rewritten: who wrote the Indian Constitution"""
+Rewritten: what does Article 19 cover
+Question: who wrote it?
+Rewritten: who wrote Article 21"""
 
 
 class OpenAIQueryRewriter:
