@@ -125,7 +125,10 @@ def get_rag_components() -> tuple[RAGOrchestrator, IngestionPipeline]:
     )
 
     # ── Query pipeline ────────────────────────────────────────────────────────
+    from src.retrieval.article_filter_retriever import ArticleFilterRetriever
+
     retriever = _build_retriever(strategy, embedder, vector_store, settings)
+    retriever = ArticleFilterRetriever(base=retriever, vector_store=vector_store)
     generator = OpenAIGenerator(
         model=settings.openai_model,
         temperature=0.0,

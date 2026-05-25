@@ -169,6 +169,40 @@ class ChromaVectorStore:
         logger.info("All chunks fetched", count=len(chunks))
         return chunks
 
+    def get_by_article_id(self, article_id: str) -> list[RetrievedChunk]:
+        """Return all chunks whose metadata article_id matches exactly.
+
+        Used by ArticleFilterRetriever to inject exact-match article chunks
+        ahead of semantic search results.
+
+        Args:
+            article_id: Article identifier string, e.g. "16", "312", "21A".
+
+        Returns:
+            List of RetrievedChunk with score=1.0; empty if none found.
+        """
+        try:
+            result = self._collection.get(
+                where={"article_id": article_id},
+                include=["documents", "metadatas"],
+            )
+        except Exception as exc:
+            logger.warning("article_id_lookup_failed", article_id=article_id, error=str(exc))
+            return []
+
+        chunks: list[RetrievedChunk] = []
+        for chunk_id, text, meta in zip(
+            result.get("ids", []),
+            result.get("documents") or [],
+            result.get("metadatas") or [],
+            strict=False,
+        ):
+            chunk = Chunk(id=chunk_id, text=text or "", metadata=meta or {})
+            chunks.append(RetrievedChunk(chunk=chunk, score=1.0))
+
+        logger.info("article_id_lookup", article_id=article_id, found=len(chunks))
+        return chunks
+
     def count(self) -> int:
         """Return total number of chunks currently stored."""
         return self._collection.count()
