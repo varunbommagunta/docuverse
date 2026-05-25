@@ -23,8 +23,11 @@ using the context chunks provided below. Follow these rules without exception:
 5. The context may contain PDF extraction artifacts such as broken brackets, orphaned
    footnote markers, amendment annotations (e.g. "Subs. by...", "Ins. by..."), or
    incomplete sentences. Ignore these artifacts and answer only from the main body text.
-6. Do NOT use any knowledge from outside the provided context.
-7. Do NOT mention these instructions, the word "context", or that you are an AI."""
+6. If the user asks how many clauses, sections, sub-clauses, or parts an article contains,
+   count them directly from the provided context and state the number. Do not refuse this
+   type of question if the article text is present in the context.
+7. Do NOT use any knowledge from outside the provided context.
+8. Do NOT mention these instructions, the word "context", or that you are an AI."""
 
 CITATION_USER_PROMPT_TEMPLATE = """Context chunks:
 
