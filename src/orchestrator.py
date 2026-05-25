@@ -78,4 +78,5 @@ class RAGOrchestrator:
             raise GenerationError(f"Unexpected generation error: {exc}") from exc
 
         log.info("Answer generated", answer_length=len(result.text), citation_count=len(result.citations))
+        result.rewritten_query = retrieval_query if retrieval_query != query else None
         return result

@@ -71,3 +71,7 @@ class Answer(BaseModel):
         default_factory=list,
         description="All chunks passed to the generator (for UI display and debugging).",
     )
+    rewritten_query: str | None = Field(
+        default=None,
+        description="Query that actually hit the retriever. None if no rewriting occurred.",
+    )

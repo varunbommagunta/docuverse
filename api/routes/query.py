@@ -71,4 +71,5 @@ async def query_documents(
         answer=answer.text,
         citations=answer.citations,
         retrieved_chunks=citation_details,
+        rewritten_query=answer.rewritten_query,
     )

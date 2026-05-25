@@ -36,6 +36,8 @@ if "ingested_docs" not in st.session_state:
         pass
 if "messages" not in st.session_state:
     st.session_state.messages: list[dict] = []
+if "debug_log" not in st.session_state:
+    st.session_state.debug_log: list[dict] = []
 
 
 def _show_sources(chunks: list[dict], citations: list[int]) -> None:
@@ -129,67 +131,93 @@ st.markdown(
     "Answers are grounded in your documents with inline `[chunk_N]` citations."
 )
 
-# Render chat history
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
-        if msg["role"] == "assistant" and msg.get("chunks"):
-            _show_sources(msg["chunks"], msg.get("citations", []))
+chat_col, debug_col = st.columns([2, 1])
 
-# Chat input
-if prompt := st.chat_input("Ask a question about your documents…"):
-    if not st.session_state.ingested_docs:
-        st.warning("Please upload and ingest a PDF first.")
-    else:
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        with st.chat_message("assistant"), st.spinner("Thinking…"):
-            try:
-                # Build history from previous messages only (exclude current user message,
-                # which was just appended above — sending it in history too duplicates
-                # the query and breaks the query rewriter's coreference resolution).
-                prior_messages = st.session_state.messages[:-1]  # all but current
-                history_to_send = [
-                    {"role": m["role"], "content": m["content"]}
-                    for m in prior_messages[-6:]  # last 3 turns
-                ] if prior_messages else []
-
-                response = requests.post(
-                    f"{API_URL}/query",
-                    json={"query": prompt, "history": history_to_send if history_to_send else None},
-                    timeout=60,
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    answer_text = data["answer"]
-                    citations = data["citations"]
-                    chunks = data["retrieved_chunks"]
-
-                    st.markdown(answer_text)
-                    _show_sources(chunks, citations)
-
-                    st.session_state.messages.append({
-                        "role": "assistant",
-                        "content": answer_text,
-                        "chunks": chunks,
-                        "citations": citations,
-                    })
-                elif response.status_code == 429:
-                    msg = "Daily cost cap reached. Try again tomorrow."
-                    st.warning(msg)
-                    st.session_state.messages.append({"role": "assistant", "content": msg})
-                elif response.status_code == 503:
-                    msg = "No documents indexed yet. Please ingest a PDF first."
-                    st.warning(msg)
-                    st.session_state.messages.append({"role": "assistant", "content": msg})
+# ── Debug panel (right column) ────────────────────────────────────────────────
+with debug_col:
+    st.subheader("Query rewriter debug")
+    if st.session_state.debug_log:
+        for entry in reversed(st.session_state.debug_log):
+            with st.container(border=True):
+                st.caption(f"Turn {entry['turn']}")
+                st.markdown(f"**Original:** `{entry['original']}`")
+                if entry["rewritten"]:
+                    st.markdown(f"**Rewritten:** `{entry['rewritten']}`")
                 else:
-                    detail = response.json().get("detail", "Unknown error")
-                    msg = f"Query failed: {detail}"
+                    st.markdown("**Rewritten:** *(no rewriting — first turn or unchanged)*")
+    else:
+        st.caption("Ask a question to see rewriter output here.")
+
+# ── Chat area (left column) ───────────────────────────────────────────────────
+with chat_col:
+    # Render chat history
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+            if msg["role"] == "assistant" and msg.get("chunks"):
+                _show_sources(msg["chunks"], msg.get("citations", []))
+
+    # Chat input
+    if prompt := st.chat_input("Ask a question about your documents…"):
+        if not st.session_state.ingested_docs:
+            st.warning("Please upload and ingest a PDF first.")
+        else:
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+            with st.chat_message("assistant"), st.spinner("Thinking…"):
+                try:
+                    # Build history from previous messages only (exclude current user message,
+                    # which was just appended above — sending it in history too duplicates
+                    # the query and breaks the query rewriter's coreference resolution).
+                    prior_messages = st.session_state.messages[:-1]  # all but current
+                    history_to_send = [
+                        {"role": m["role"], "content": m["content"]}
+                        for m in prior_messages[-6:]  # last 3 turns
+                    ] if prior_messages else []
+
+                    response = requests.post(
+                        f"{API_URL}/query",
+                        json={"query": prompt, "history": history_to_send if history_to_send else None},
+                        timeout=60,
+                    )
+                    if response.status_code == 200:
+                        data = response.json()
+                        answer_text = data["answer"]
+                        citations = data["citations"]
+                        chunks = data["retrieved_chunks"]
+                        rewritten = data.get("rewritten_query")
+
+                        st.markdown(answer_text)
+                        _show_sources(chunks, citations)
+
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": answer_text,
+                            "chunks": chunks,
+                            "citations": citations,
+                        })
+                        st.session_state.debug_log.append({
+                            "turn": len(st.session_state.debug_log) + 1,
+                            "original": prompt,
+                            "rewritten": rewritten,
+                        })
+                        st.rerun()
+                    elif response.status_code == 429:
+                        msg = "Daily cost cap reached. Try again tomorrow."
+                        st.warning(msg)
+                        st.session_state.messages.append({"role": "assistant", "content": msg})
+                    elif response.status_code == 503:
+                        msg = "No documents indexed yet. Please ingest a PDF first."
+                        st.warning(msg)
+                        st.session_state.messages.append({"role": "assistant", "content": msg})
+                    else:
+                        detail = response.json().get("detail", "Unknown error")
+                        msg = f"Query failed: {detail}"
+                        st.error(msg)
+                        st.session_state.messages.append({"role": "assistant", "content": msg})
+                except requests.ConnectionError:
+                    msg = "Cannot connect to the API. Is the backend running?"
                     st.error(msg)
                     st.session_state.messages.append({"role": "assistant", "content": msg})
-            except requests.ConnectionError:
-                msg = "Cannot connect to the API. Is the backend running?"
-                st.error(msg)
-                st.session_state.messages.append({"role": "assistant", "content": msg})

@@ -65,3 +65,7 @@ class QueryResponse(BaseModel):
     retrieved_chunks: list[CitationDetail] = Field(
         description="All chunks passed to the generator, for UI source display."
     )
+    rewritten_query: str | None = Field(
+        default=None,
+        description="Query sent to the retriever. None when no rewriting occurred (first turn or rewriter skipped).",
+    )
