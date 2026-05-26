@@ -27,6 +27,7 @@ export interface ChunkDebug {
   article_id?: string | null;
   section_title?: string | null;
   preview: string;
+  text?: string;
 }
 
 export interface QueryDebug {

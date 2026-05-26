@@ -127,6 +127,7 @@ class RAGOrchestrator:
                         "article_id": rc.chunk.metadata.get("article_id"),
                         "section_title": rc.chunk.metadata.get("section_title"),
                         "preview": rc.chunk.text[:80],
+                        "text": rc.chunk.text,
                     }
                     for i, rc in enumerate(chunks)
                 ],

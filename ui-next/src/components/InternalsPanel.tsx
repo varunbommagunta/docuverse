@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { QueryDebug, Document } from "@/lib/types";
 
 interface Props {
@@ -71,6 +72,7 @@ function QueryPipelineCard({ debug }: { debug: QueryDebug | null }) {
 }
 
 function RetrievedChunksCard({ debug }: { debug: QueryDebug | null }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const chunks = debug?.chunks ?? [];
   const maxScore = chunks.reduce((m, c) => Math.max(m, c.score), 0.001);
 
@@ -80,27 +82,44 @@ function RetrievedChunksCard({ debug }: { debug: QueryDebug | null }) {
         <Empty />
       ) : (
         <ul className="space-y-3">
-          {chunks.map((c) => (
-            <li key={c.id} className="space-y-1.5">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-mono text-[10px] text-slate-400">{c.id}</span>
-                {c.pinned && (
-                  <span className="text-[9px] px-1.5 py-0.5 bg-violet-500/15 text-violet-300 rounded-md font-medium">pinned</span>
+          {chunks.map((c) => {
+            const isExpanded = expandedId === c.id;
+            return (
+              <li
+                key={c.id}
+                className="space-y-1.5 cursor-pointer select-none rounded-lg p-1.5 -mx-1.5 transition-colors hover:bg-white/[0.03]"
+                onClick={() => setExpandedId(isExpanded ? null : c.id)}
+              >
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-mono text-[10px] text-slate-400">{c.id}</span>
+                  {c.pinned && (
+                    <span className="text-[9px] px-1.5 py-0.5 bg-violet-500/15 text-violet-300 rounded-md font-medium">pinned</span>
+                  )}
+                  <span className="text-[10px] text-teal-400 ml-auto font-mono">{c.score.toFixed(3)}</span>
+                  <svg
+                    className={`w-3 h-3 text-slate-500 flex-shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <div className="text-[10px] text-slate-600 truncate">
+                  {c.source}{c.article_id ? ` §${c.article_id}` : ""}{c.section_title ? ` / ${c.section_title}` : ""}
+                </div>
+                {isExpanded && c.text ? (
+                  <p className="text-[11px] text-slate-300 leading-relaxed whitespace-pre-wrap break-words">{c.text}</p>
+                ) : (
+                  <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2">{c.preview}</p>
                 )}
-                <span className="text-[10px] text-teal-400 ml-auto font-mono">{c.score.toFixed(3)}</span>
-              </div>
-              <div className="text-[10px] text-slate-600 truncate">
-                {c.source}{c.article_id ? ` §${c.article_id}` : ""}{c.section_title ? ` / ${c.section_title}` : ""}
-              </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2">{c.preview}</p>
-              <div className="w-full h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-teal-500 to-cyan-400 rounded-full"
-                  style={{ width: `${(c.score / maxScore) * 100}%` }}
-                />
-              </div>
-            </li>
-          ))}
+                <div className="w-full h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-teal-500 to-cyan-400 rounded-full"
+                    style={{ width: `${(c.score / maxScore) * 100}%` }}
+                  />
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </Card>
