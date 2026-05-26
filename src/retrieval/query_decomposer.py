@@ -14,10 +14,27 @@ the normal pipeline runs with no overhead.
 """
 
 import json
+import re
 import structlog
 from openai import OpenAI
 
 logger = structlog.get_logger(__name__)
+
+# Patterns that reliably signal a multi-aspect query worth decomposing.
+# False negatives (missed multi-aspect) are acceptable — the LLM is only
+# called when genuinely needed. False positives waste an LLM call with no
+# quality gain.
+_MULTI_ASPECT_RE = re.compile(
+    r'\b('
+    r'compare|comparison|contrast'
+    r'|versus|vs\.?'
+    r'|differ(?:ence|ent|s)?|distinguish'
+    r'|relationship\s+between|interaction\s+between|interplay\s+between'
+    r')'
+    r'|between\b.{3,80}?\band\b'   # "between X and Y"
+    r'|both\b.{3,80}?\band\b',     # "both X and Y"
+    re.IGNORECASE | re.DOTALL,
+)
 
 _SYSTEM_PROMPT = """You are a query decomposer for a document retrieval system.
 
@@ -58,9 +75,14 @@ class QueryDecomposer:
     def decompose(self, query: str) -> list[str]:
         """Return a list of sub-queries for the given query.
 
-        Returns a one-element list (the original query) when decomposition is
-        not needed, so callers can always treat the result as a list.
+        Applies a regex pre-filter before calling the LLM: queries that show
+        no signal of being multi-aspect are returned immediately as a
+        one-element list, saving ~1s per simple query.
         """
+        if not _MULTI_ASPECT_RE.search(query):
+            logger.info("decomposer_skipped_by_prefilter", query=query[:80])
+            return [query]
+
         try:
             response = self._client.chat.completions.create(
                 model=self._model,
