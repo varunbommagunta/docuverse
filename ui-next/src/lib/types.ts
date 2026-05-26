@@ -30,6 +30,13 @@ export interface ChunkDebug {
   text?: string;
 }
 
+export interface LatencyDebug {
+  rewrite_ms: number;
+  retrieval_ms: number;
+  generation_ms: number;
+  total_ms: number;
+}
+
 export interface QueryDebug {
   original_query: string;
   rewritten_query: string;
@@ -37,6 +44,7 @@ export interface QueryDebug {
   retrieval_strategy: string;
   chunks: ChunkDebug[];
   reranker?: RerankerDebug | null;
+  latency?: LatencyDebug;
 }
 
 export interface Message {

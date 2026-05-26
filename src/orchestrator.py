@@ -1,5 +1,6 @@
 """RAGOrchestrator — coordinates retrieval and generation for a single query."""
 
+import time
 import structlog
 
 from src.generation.base import Generator
@@ -47,34 +48,46 @@ class RAGOrchestrator:
 
     def answer(self, query: str, history: list[dict] | None = None) -> Answer:
         """Run the full RAG pipeline and return an Answer with debug info."""
+        t_total = time.perf_counter()
         log = logger.bind(query_length=len(query))
         log.info("Query received")
 
         retrieval_query = query
+        rewrite_ms = 0.0
         if self._query_rewriter and history:
+            t = time.perf_counter()
             retrieval_query = self._query_rewriter.rewrite(query, history)
+            rewrite_ms = (time.perf_counter() - t) * 1000
 
         # ── Decompose and retrieve ─────────────────────────────────────────────
+        t = time.perf_counter()
         try:
             chunks = self._retrieve_with_decomposition(retrieval_query)
         except RetrievalError:
             raise
         except Exception as exc:
             raise RetrievalError(f"Unexpected retrieval error: {exc}") from exc
+        retrieval_ms = (time.perf_counter() - t) * 1000
 
         log.info("Chunks retrieved", chunk_count=len(chunks))
 
         # ── Generate ──────────────────────────────────────────────────────────
+        t = time.perf_counter()
         try:
             result = self._generator.generate(retrieval_query, chunks)
         except GenerationError:
             raise
         except Exception as exc:
             raise GenerationError(f"Unexpected generation error: {exc}") from exc
+        generation_ms = (time.perf_counter() - t) * 1000
 
-        log.info("Answer generated", answer_length=len(result.text), citation_count=len(result.citations))
+        total_ms = (time.perf_counter() - t_total) * 1000
+        log.info("Answer generated", answer_length=len(result.text), citation_count=len(result.citations), total_ms=round(total_ms))
         result.rewritten_query = retrieval_query if retrieval_query != query else None
-        result.debug = self._build_debug(query, retrieval_query, chunks)
+        result.debug = self._build_debug(
+            query, retrieval_query, chunks,
+            latency={"rewrite_ms": rewrite_ms, "retrieval_ms": retrieval_ms, "generation_ms": generation_ms, "total_ms": total_ms},
+        )
         return result
 
     def _retrieve_with_decomposition(self, query: str) -> list[RetrievedChunk]:
@@ -99,7 +112,7 @@ class RAGOrchestrator:
         merged = sorted(seen.values(), key=lambda rc: rc.score, reverse=True)
         return merged[: self._max_chunks]
 
-    def _build_debug(self, original_query: str, retrieval_query: str, chunks) -> dict:
+    def _build_debug(self, original_query: str, retrieval_query: str, chunks, latency: dict | None = None) -> dict:
         try:
             afr_debug = getattr(self._retriever, "last_debug", {}) or {}
             inner = getattr(self._retriever, "_base", None)
@@ -132,6 +145,7 @@ class RAGOrchestrator:
                     for i, rc in enumerate(chunks)
                 ],
                 "reranker": rr_debug if rr_debug else None,
+                "latency": latency or {},
             }
         except Exception as exc:
             logger.warning("debug_build_failed", error=str(exc))

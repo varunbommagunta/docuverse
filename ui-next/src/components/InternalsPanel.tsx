@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { QueryDebug, Document } from "@/lib/types";
+import type { QueryDebug, Document, LatencyDebug } from "@/lib/types";
 
 interface Props {
   queryDebug: QueryDebug | null;
@@ -18,11 +18,59 @@ export default function InternalsPanel({ queryDebug, lastIngestion }: Props) {
         </div>
       </div>
       <div className="flex flex-col gap-3 px-3 py-3">
+        <TelemetryCard latency={queryDebug?.latency} chunkCount={queryDebug?.chunks.length} />
         <QueryPipelineCard debug={queryDebug} />
         <RetrievedChunksCard debug={queryDebug} />
         <IngestionCard doc={lastIngestion} />
       </div>
     </aside>
+  );
+}
+
+function TelemetryCard({ latency, chunkCount }: { latency?: LatencyDebug; chunkCount?: number }) {
+  const fmt = (ms: number) => ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(2)} s`;
+
+  const rows: Array<{ label: string; value: string; bar?: number; highlight?: boolean }> = latency
+    ? [
+        { label: "Total",      value: fmt(latency.total_ms),      bar: 100,                                              highlight: true },
+        { label: "Generation", value: fmt(latency.generation_ms), bar: (latency.generation_ms / latency.total_ms) * 100 },
+        { label: "Retrieval",  value: fmt(latency.retrieval_ms),  bar: (latency.retrieval_ms  / latency.total_ms) * 100 },
+        ...(latency.rewrite_ms > 0
+          ? [{ label: "Rewrite", value: fmt(latency.rewrite_ms), bar: (latency.rewrite_ms / latency.total_ms) * 100 }]
+          : []),
+        ...(chunkCount !== undefined ? [{ label: "Chunks used", value: String(chunkCount) }] : []),
+      ]
+    : [];
+
+  return (
+    <Card gradient="from-rose-500 to-pink-500" icon={<TelemetryIcon />} title="Telemetry">
+      {!latency ? (
+        <Empty />
+      ) : (
+        <ul className="space-y-2.5">
+          {rows.map((r) => (
+            <li key={r.label} className="space-y-1">
+              <div className="flex justify-between items-center">
+                <span className={`text-[10px] uppercase tracking-wider font-medium ${r.highlight ? "text-rose-400" : "text-slate-500"}`}>
+                  {r.label}
+                </span>
+                <span className={`font-mono text-[11px] ${r.highlight ? "text-rose-300 font-semibold" : "text-slate-300"}`}>
+                  {r.value}
+                </span>
+              </div>
+              {r.bar !== undefined && (
+                <div className="w-full h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${r.highlight ? "bg-gradient-to-r from-rose-500 to-pink-400" : "bg-white/20"}`}
+                    style={{ width: `${Math.min(r.bar, 100)}%` }}
+                  />
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   );
 }
 
@@ -205,6 +253,15 @@ function IngestIcon() {
     <svg fill="none" stroke="white" viewBox="0 0 24 24" className="w-3 h-3">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+    </svg>
+  );
+}
+
+function TelemetryIcon() {
+  return (
+    <svg fill="none" stroke="white" viewBox="0 0 24 24" className="w-3 h-3">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M3 13.5l4-4 4 4 4-6 4 4M3 20h18" />
     </svg>
   );
 }
