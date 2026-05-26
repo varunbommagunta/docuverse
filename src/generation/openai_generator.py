@@ -85,29 +85,27 @@ class OpenAIGenerator:
 
     @staticmethod
     def _clean_text(text: str) -> str:
-        """Remove constitutional amendment markers and footnote artifacts from chunk text.
-
-        Mirrors LegalChunker._clean_text so that chunks ingested before the fix
-        (or from non-legal chunkers) are also cleaned at query time.
-        """
+        """Remove constitutional amendment markers and footnote artifacts from chunk text."""
         # Transition markers ]N[ → space
         text = re.sub(r"\]\d+\[", " ", text)
         # Opening amendment markers N[ → nothing (keep inserted content)
         text = re.sub(r"\d+\[", "", text)
-        # Remaining closing brackets
-        text = re.sub(r"\]", "", text)
-        # Orphaned opening brackets (no matching ] remains)
-        text = re.sub(r"\[", "", text)
-        # Footnote separator lines
-        text = re.sub(r"_{10,}", "", text)
+        # Remaining closing/opening brackets
+        text = re.sub(r"[\[\]]", "", text)
+        # Footnote separator lines (underscores or dashes)
+        text = re.sub(r"[_\-]{10,}", "", text)
         # Footnote label lines: digit + period + amendment keyword
         text = re.sub(
-            r"^\d+\.\s+(?:Subs|Ins|Rep|Omitted)\..*$",
+            r"^\d+\.\s+(?:Subs|Ins|Rep|Omitted|Added|Renumbered)\..*$",
             "",
             text,
             flags=re.MULTILINE | re.IGNORECASE,
         )
-        # Collapse blank lines and spaces created by removals
+        # Standalone page numbers (e.g. "— 12 —" or just a bare number on its own line)
+        text = re.sub(r"^\s*[—\-]?\s*\d+\s*[—\-]?\s*$", "", text, flags=re.MULTILINE)
+        # Running headers that repeat (e.g. "THE CONSTITUTION OF INDIA" on every page)
+        text = re.sub(r"^THE CONSTITUTION OF INDIA\s*$", "", text, flags=re.MULTILINE | re.IGNORECASE)
+        # Collapse excess blank lines and spaces
         text = re.sub(r"\n{3,}", "\n\n", text)
         text = re.sub(r"  +", " ", text)
         return text.strip()
