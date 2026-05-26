@@ -145,11 +145,24 @@ def get_rag_components() -> tuple[RAGOrchestrator, IngestionPipeline]:
     else:
         query_rewriter = None
 
+    # Build query decomposer (or None if disabled)
+    if settings.enable_query_decomposition:
+        from src.retrieval.query_decomposer import QueryDecomposer
+        query_decomposer = QueryDecomposer(
+            api_key=settings.openai_api_key,
+            model=settings.query_decomposer_model,
+        )
+    else:
+        query_decomposer = None
+
     orchestrator = RAGOrchestrator(
         retriever=retriever,
         generator=generator,
         query_rewriter=query_rewriter,
+        query_decomposer=query_decomposer,
         retrieval_strategy=strategy,
+        sub_top_k=settings.decomposition_sub_top_k,
+        max_chunks=settings.decomposition_max_chunks,
     )
 
     logger.info("RAG components ready", retrieval_strategy=strategy)

@@ -85,6 +85,28 @@ class Settings(BaseSettings):
         gt=0,
     )
 
+    # ── Query decomposition ───────────────────────────────────────────────────
+    enable_query_decomposition: bool = Field(
+        default=True,
+        description="Split multi-aspect queries into sub-queries before retrieval. "
+        "Each sub-query retrieves independently; results are merged and deduplicated.",
+    )
+    query_decomposer_model: str = Field(
+        default="gpt-4o-mini",
+        description="Model used by the query decomposer.",
+    )
+    decomposition_sub_top_k: int = Field(
+        default=4,
+        description="Chunks retrieved per sub-query when decomposition fires. "
+        "Total context passed to the generator is capped at decomposition_max_chunks.",
+        gt=0,
+    )
+    decomposition_max_chunks: int = Field(
+        default=8,
+        description="Maximum total chunks sent to the generator after merging sub-query results.",
+        gt=0,
+    )
+
     # ── Query rewriting ───────────────────────────────────────────────────────
     enable_query_rewriting: bool = Field(
         default=True,

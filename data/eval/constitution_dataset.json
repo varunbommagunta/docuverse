@@ -1,0 +1,102 @@
+[
+  {
+    "question": "What does Article 21 of the Indian Constitution protect?",
+    "ground_truth": "Article 21 protects the right to life and personal liberty. It states that no person shall be deprived of his life or personal liberty except according to procedure established by law.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What does Article 14 of the Indian Constitution guarantee?",
+    "ground_truth": "Article 14 guarantees equality before law and equal protection of the laws within the territory of India. The State shall not deny to any person equality before the law or the equal protection of the laws.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What freedoms does Article 19(1) of the Constitution confer on citizens?",
+    "ground_truth": "Article 19(1) confers on all citizens the right to freedom of speech and expression, to assemble peaceably and without arms, to form associations or unions, to move freely throughout India, to reside and settle in any part of India, and to practise any profession or carry on any occupation, trade or business.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What does Article 32 of the Indian Constitution provide?",
+    "ground_truth": "Article 32 guarantees the right to move the Supreme Court by appropriate proceedings for the enforcement of Fundamental Rights. It empowers the Supreme Court to issue writs including habeas corpus, mandamus, prohibition, quo warranto, and certiorari for the enforcement of those rights.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What is the composition of Parliament under Article 79?",
+    "ground_truth": "Article 79 states that there shall be a Parliament for the Union which shall consist of the President and two Houses known as the Council of States (Rajya Sabha) and the House of the People (Lok Sabha).",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "Under what circumstances can the President proclaim a National Emergency under Article 352?",
+    "ground_truth": "Under Article 352, the President can proclaim a National Emergency if satisfied that a grave emergency exists whereby the security of India or any part of its territory is threatened by war, external aggression, or armed rebellion.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What does Article 124 say about the establishment of the Supreme Court?",
+    "ground_truth": "Article 124 provides for the establishment of a Supreme Court of India consisting of a Chief Justice of India and, until Parliament by law prescribes a larger number, of not more than seven other judges.",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What protections does Article 20 provide to persons accused of offences?",
+    "ground_truth": "Article 20 provides three protections: no person shall be convicted of any offence except for violation of a law in force at the time of the act (protection against ex post facto laws); no person shall be prosecuted and punished for the same offence more than once (protection against double jeopardy); and no person accused of any offence shall be compelled to be a witness against himself (protection against self-incrimination).",
+    "category": "simple_lookup"
+  },
+  {
+    "question": "What are the rights guaranteed under Article 19(1) and what reasonable restrictions can the State impose on them?",
+    "ground_truth": "Article 19(1) guarantees six freedoms: speech and expression, peaceful assembly, forming associations, free movement, residence, and practising any profession. The State can impose reasonable restrictions on these rights on grounds such as sovereignty and integrity of India, security of the State, friendly relations with foreign states, public order, decency or morality, contempt of court, defamation, and incitement to an offence.",
+    "category": "multi_fact"
+  },
+  {
+    "question": "What are the provisions relating to the Union legislature under Part V of the Constitution?",
+    "ground_truth": "Part V deals with the Union and includes provisions for Parliament (Article 79), which consists of the President, the Rajya Sabha (Council of States), and the Lok Sabha (House of the People). It covers the composition, qualification of members, duration of Houses, sessions, legislative procedure, and the powers of Parliament to make laws.",
+    "category": "multi_fact"
+  },
+  {
+    "question": "What are the safeguards provided under Article 22 for persons arrested and detained?",
+    "ground_truth": "Article 22 provides that a person who is arrested must be informed of the grounds of arrest as soon as possible, must have the right to consult and be defended by a legal practitioner of their choice, and must be produced before the nearest magistrate within 24 hours of arrest. No person shall be detained in custody beyond this period without the authority of a magistrate.",
+    "category": "multi_fact"
+  },
+  {
+    "question": "How does the Constitution define and protect cultural and educational rights under Articles 29 and 30?",
+    "ground_truth": "Article 29 protects the interests of minorities, allowing any section of citizens with a distinct language, script, or culture to conserve the same, and preventing denial of admission to educational institutions on grounds of religion, race, caste, or language. Article 30 gives all minorities the right to establish and administer educational institutions of their choice, and the State cannot discriminate against such institutions in granting aid.",
+    "category": "multi_fact"
+  },
+  {
+    "question": "What does the Constitution say about the official language of the Union under Article 343 and related provisions?",
+    "ground_truth": "Article 343 provides that Hindi in Devanagari script shall be the official language of the Union. English was to continue for official purposes for fifteen years after the Constitution's commencement. Parliament may by law provide for use of Hindi or English for specified purposes. Article 344 provides for a Commission and Committee of Parliament on official language.",
+    "category": "multi_fact"
+  },
+  {
+    "question": "How do Fundamental Rights under Part III and Directive Principles of State Policy under Part IV differ in their legal enforceability?",
+    "ground_truth": "Fundamental Rights (Part III, Articles 12–35) are justiciable — they are enforceable by courts, and any law or state action violating them can be struck down. Citizens can approach the Supreme Court under Article 32 or High Courts under Article 226 for their enforcement. Directive Principles (Part IV, Articles 36–51) are non-justiciable — they are guidelines for the state in governance and law-making but cannot be directly enforced through courts. However, both are fundamental to governance and must be read harmoniously.",
+    "category": "cross_chunk"
+  },
+  {
+    "question": "What is the relationship between Articles 14, 19, and 21, and how have they been interpreted together as a guarantee of personal liberty?",
+    "ground_truth": "Articles 14 (equality before law), 19 (protection of freedoms), and 21 (protection of life and personal liberty) together form the golden triangle of Fundamental Rights. Article 21 protects life and liberty from arbitrary state action. Article 14 ensures any procedure depriving liberty must be non-arbitrary. Article 19 ensures the procedure must not abridge the freedoms guaranteed to citizens. Together, they require that any law restricting personal liberty must be fair, just, and reasonable.",
+    "category": "cross_chunk"
+  },
+  {
+    "question": "How does the Constitution distribute legislative powers between the Union and the States?",
+    "ground_truth": "The Constitution distributes legislative powers through three lists in the Seventh Schedule: the Union List (subjects on which only Parliament can legislate, such as defence, foreign affairs, and atomic energy), the State List (subjects on which only State legislatures can legislate, such as police, public health, and agriculture), and the Concurrent List (subjects on which both Parliament and State legislatures can legislate, such as criminal law and education). In case of conflict between Union and State laws on Concurrent List subjects, the Union law prevails.",
+    "category": "cross_chunk"
+  },
+  {
+    "question": "What is the salary of the Chief Justice of India as specified in the Constitution?",
+    "ground_truth": "The Constitution of India does not specify the salary of the Chief Justice of India in its main text. Salaries of Supreme Court judges are charged to the Consolidated Fund of India, but the specific amounts are determined by Parliament through separate legislation, not set out in the Constitution itself.",
+    "category": "negative"
+  },
+  {
+    "question": "What are the grounds on which a sitting President of India can be impeached according to the Constitution?",
+    "ground_truth": "The Constitution provides for impeachment of the President under Article 61 for violation of the Constitution. The specific acts or misconduct that constitute grounds for impeachment are not enumerated; the only ground stated is violation of the Constitution. The process requires a charge to be preferred by either House of Parliament with a two-thirds majority, after which the other House investigates the charge.",
+    "category": "negative"
+  },
+  {
+    "question": "Article 32?",
+    "ground_truth": "Article 32 guarantees the right to move the Supreme Court for enforcement of Fundamental Rights. The Supreme Court can issue writs including habeas corpus, mandamus, prohibition, quo warranto, and certiorari. This right itself is a Fundamental Right and cannot be suspended except as provided by the Constitution.",
+    "category": "edge_case"
+  },
+  {
+    "question": "Considering the federal structure of the Indian Constitution and the distribution of powers between the Union and the States, how does the Constitution balance national unity with regional autonomy, particularly in light of emergency provisions under Article 352, the role of the Governor under Part VI, and the legislative distribution under the Seventh Schedule?",
+    "ground_truth": "The Indian Constitution establishes a quasi-federal structure with a strong Centre. The Seventh Schedule distributes legislative powers into Union, State, and Concurrent Lists, with residuary powers vesting in Parliament. The Governor, appointed by the President under Part VI, acts as the constitutional link between the Centre and States. Under Article 352, a National Emergency shifts the balance strongly toward the Centre, allowing Parliament to legislate on State List subjects. These provisions together reflect a federal structure that leans toward a unitary system during emergencies while maintaining state autonomy during normal times.",
+    "category": "edge_case"
+  }
+]

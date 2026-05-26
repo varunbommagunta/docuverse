@@ -5,7 +5,7 @@ import structlog
 from src.generation.base import Generator
 from src.retrieval.base import Retriever
 from src.utils.exceptions import GenerationError, RetrievalError
-from src.utils.models import Answer
+from src.utils.models import Answer, RetrievedChunk
 
 logger = structlog.get_logger(__name__)
 
@@ -25,17 +25,24 @@ class RAGOrchestrator:
         retriever: Retriever,
         generator: Generator,
         query_rewriter=None,
+        query_decomposer=None,
         retrieval_strategy: str = "hybrid",
+        sub_top_k: int = 4,
+        max_chunks: int = 8,
     ) -> None:
         self._retriever = retriever
         self._generator = generator
         self._query_rewriter = query_rewriter
+        self._query_decomposer = query_decomposer
         self._retrieval_strategy = retrieval_strategy
+        self._sub_top_k = sub_top_k
+        self._max_chunks = max_chunks
         logger.info(
             "RAGOrchestrator initialised",
             retriever=type(retriever).__name__,
             generator=type(generator).__name__,
             query_rewriting_enabled=query_rewriter is not None,
+            query_decomposition_enabled=query_decomposer is not None,
         )
 
     def answer(self, query: str, history: list[dict] | None = None) -> Answer:
@@ -47,9 +54,9 @@ class RAGOrchestrator:
         if self._query_rewriter and history:
             retrieval_query = self._query_rewriter.rewrite(query, history)
 
-        # ── Retrieve ──────────────────────────────────────────────────────────
+        # ── Decompose and retrieve ─────────────────────────────────────────────
         try:
-            chunks = self._retriever.retrieve(retrieval_query, top_k=5)
+            chunks = self._retrieve_with_decomposition(retrieval_query)
         except RetrievalError:
             raise
         except Exception as exc:
@@ -69,6 +76,28 @@ class RAGOrchestrator:
         result.rewritten_query = retrieval_query if retrieval_query != query else None
         result.debug = self._build_debug(query, retrieval_query, chunks)
         return result
+
+    def _retrieve_with_decomposition(self, query: str) -> list[RetrievedChunk]:
+        """Decompose query if needed, retrieve per sub-query, merge results."""
+        if self._query_decomposer is None:
+            return self._retriever.retrieve(query, top_k=5)
+
+        sub_queries = self._query_decomposer.decompose(query)
+
+        # Single sub-query — normal path, no overhead
+        if len(sub_queries) == 1:
+            return self._retriever.retrieve(sub_queries[0], top_k=5)
+
+        # Multiple sub-queries — retrieve per sub-query, merge by chunk ID
+        seen: dict[str, RetrievedChunk] = {}
+        for sq in sub_queries:
+            for rc in self._retriever.retrieve(sq, top_k=self._sub_top_k):
+                cid = rc.chunk.id
+                if cid not in seen or rc.score > seen[cid].score:
+                    seen[cid] = rc
+
+        merged = sorted(seen.values(), key=lambda rc: rc.score, reverse=True)
+        return merged[: self._max_chunks]
 
     def _build_debug(self, original_query: str, retrieval_query: str, chunks) -> dict:
         try:
