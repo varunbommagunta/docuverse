@@ -8,6 +8,7 @@ from api.schemas import (
     ArticleFilterDebug,
     ChunkDebug,
     CitationDetail,
+    LatencyDebug,
     QueryDebug,
     QueryRequest,
     QueryResponse,
@@ -71,6 +72,7 @@ async def query_documents(
         d = answer.debug
         af = d.get("article_filter", {})
         rr = d.get("reranker")
+        lat = d.get("latency", {})
         debug = QueryDebug(
             original_query=d.get("original_query", body.query),
             rewritten_query=d.get("rewritten_query", body.query),
@@ -89,10 +91,12 @@ async def query_documents(
                     article_id=c.get("article_id"),
                     section_title=c.get("section_title"),
                     preview=c.get("preview", ""),
+                    text=c.get("text", ""),
                 )
                 for c in d.get("chunks", [])
             ],
             reranker=RerankerDebug(**rr) if rr else None,
+            latency=LatencyDebug(**lat) if lat else None,
         )
 
     return QueryResponse(

@@ -63,6 +63,14 @@ class ChunkDebug(BaseModel):
     article_id: str | None = None
     section_title: str | None = None
     preview: str = ""
+    text: str = ""
+
+
+class LatencyDebug(BaseModel):
+    rewrite_ms: float = 0.0
+    retrieval_ms: float = 0.0
+    generation_ms: float = 0.0
+    total_ms: float = 0.0
 
 
 class QueryDebug(BaseModel):
@@ -72,6 +80,7 @@ class QueryDebug(BaseModel):
     retrieval_strategy: str
     chunks: list[ChunkDebug]
     reranker: RerankerDebug | None = None
+    latency: LatencyDebug | None = None
 
 
 class QueryResponse(BaseModel):
